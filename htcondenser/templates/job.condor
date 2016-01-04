@@ -12,8 +12,8 @@ when_to_transfer_output = ON_EXIT_OR_EVICT
 transfer_output_files = {TRANSFER_OUTPUTFILES}
 
 request_cpus = {CPUS}
-request_memory = {MEMORY}
-request_disk = {DISK}
+#request_memory = {MEMORY}
+#request_disk = {DISK}
 
 accounting_group = group_physics.hep
 account_group_user = $ENV(LOGNAME)
