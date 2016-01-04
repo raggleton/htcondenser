@@ -27,19 +27,26 @@ HDFS_STORE = "/hdfs/user/%s/simple_job" % os.environ['LOGNAME']
 if not os.path.isdir(HDFS_STORE):
     os.makedirs(HDFS_STORE)
 
+# Set location for logs
+LOG_STORE = "/storage/ra12451/simple_job"
+
+if not os.path.idir(LOG_STORE):
+    os.makedirs(LOG_STORE)
+
+
 # Define a JobSet object for all jobs running the same exe
 # with same configuration for logs, etc
 job_set = ht.JobSet(exe='simple_worker_script.sh',
                     copy_exe=True,
                     setup=None,
                     filename='simple_job.condor',
-                    out_dir='log',
+                    out_dir=os.path.join(LOG_STORE, 'log'),
                     out_file='simple.$(cluster).$(process).out',
-                    err_dir='log',
+                    err_dir=os.path.join(LOG_STORE, 'log'),
                     err_file='simple.$(cluster).$(process).err',
-                    log_dir='log',
+                    log_dir=os.path.join(LOG_STORE, 'log'),
                     log_file='simple.$(cluster).$(process).log',
-                    cpus=1, memory='50MB', disk='5MB',
+                    cpus=1, memory='50MB', disk='1',
                     hdfs_store=HDFS_STORE)
 
 # Now add individual Jobs
@@ -57,4 +64,4 @@ for i, word in enumerate(['Easter', 'NYE', 'Summer']):
                  number=1)
 
 # Now submit jobs
-job_set.write()
+job_set.submit()
