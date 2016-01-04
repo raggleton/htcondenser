@@ -11,7 +11,7 @@ To use, do:
 import logging
 
 
-class LevelFormatter(logging.Formatter):
+class LevelFormatter(logging.Formatter, object):
     """Custom message formatter for different severity levels
 
     Taken from: https://stackoverflow.com/questions/28635679/python-logging-different-formatters-for-the-same-log-file
