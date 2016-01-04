@@ -189,7 +189,7 @@ class JobSet(object):
         self.write()
 
         for job in self.jobs.itervalues():
-            job.transfer_input_files()
+            job.transfer_to_hdfs()
 
         call(['condor_submit', self.job_filename])
 
