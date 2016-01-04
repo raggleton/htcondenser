@@ -308,7 +308,7 @@ class Job(object):
         for input and output files, and automatically updating the args to
         account for new locations on HDFS or worker node.
         """
-        job_args = []
+        job_args = ['arguments=']
 
         new_args = self.args[:]
 
