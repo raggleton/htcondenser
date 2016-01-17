@@ -1,1 +1,6 @@
 *.pyc
+*.err
+*.out
+*.log
+
+examples/simple_exe_job/showsize
