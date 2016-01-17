@@ -11,6 +11,7 @@ import os
 import re
 from subprocess import check_call
 from common import cp_hdfs
+from collections import OrderedDict
 
 
 log = logging.getLogger(__name__)
@@ -112,7 +113,8 @@ class JobSet(object):
         self.hdfs_store = hdfs_store
         self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
 
-        self.jobs = {}  # Holds all Job object this JobSet pertains to.
+        # Hold all Job object this JobSet governs, key is Job name.
+        self.jobs = OrderedDict()
 
         # Setup directories
         # ---------------------------------------------------------------------
