@@ -22,7 +22,9 @@ Look in the `examples` directory. There are several directories, each designed t
 
 - [`simple_job/simple_job.py`](examples/simple_job/simple_job.py): submits 3 jobs, each running a simple shell script, but with different arguments. Designed to show off how to use the `htcondenser` classes.
 
-- [`simple_exe_job/simple_exe_job.py`](examples/simple_exe_job/simple_exe_job): submits a job using a user-compiled exe, `showsize`. Before submission, you must compile the exe: `gcc showsize.c -o showsize`. Test it runs ok by doing: `./showsize`.
+- [`simple_exe_job/simple_exe_job.py`](examples/simple_exe_job/simple_exe_job.py): submits a job using a user-compiled exe, `showsize`. Before submission, you must compile the exe: `gcc showsize.c -o showsize`. Test it runs ok by doing: `./showsize`.
+
+- [`simple_cmssw_job/simple_cmssw_job.py`](examples/simple_cmssw_job/simple_cmssw_job.py): setup a CMSSW environment and run `edmDumpEventContent` inside it.
 
 ## But I want XYZ!
 

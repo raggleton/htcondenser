@@ -1,0 +1,27 @@
+Executable = /users/ra12451/htcondenser/htcondenser/core/../templates/condor_worker.py
+Universe = vanilla
+Output = /storage/ra12451/simple_root6_job/log/simple.$(cluster).$(process).out
+Error = /storage/ra12451/simple_root6_job/log/simple.$(cluster).$(process).err
+Log = /storage/ra12451/simple_root6_job/log/simple.$(cluster).$(process).log
+
+# This is required to be YES otherwise the Executable will NOT be copied across.
+should_transfer_files = YES
+
+transfer_input_files = 
+when_to_transfer_output = ON_EXIT_OR_EVICT
+transfer_output_files = 
+
+request_cpus = 1
+#request_memory = 50MB
+#request_disk = 1
+
+accounting_group = group_physics.hep
+account_group_user = $ENV(LOGNAME)
+
+# use the ENV that is provided
+getenv = true
+
+
+# root6_job
+arguments="--setup setup_root6.sh --copyToLocal /hdfs/user/ra12451/simple_root6_job/root6_job/hist.C hist.C --copyToLocal /hdfs/user/ra12451/simple_root6_job/root6_job/setup_root6.sh setup_root6.sh --copyFromLocal hist.pdf /hdfs/user/ra12451/simple_root6_job/root6_job/hist.pdf --exe 'root -l -q -b' --args hist.C"
+queue 1
