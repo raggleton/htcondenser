@@ -40,7 +40,7 @@ log_stem = 'simple.$(cluster).$(process)'
 # with same configuration for logs, etc
 job_set = ht.JobSet(exe='./simple_worker_script.sh',
                     copy_exe=True,
-                    setup=None,
+                    setup_script=None,
                     filename='simple_job.condor',
                     out_dir=log_dir,
                     out_file=log_stem + '.out',
