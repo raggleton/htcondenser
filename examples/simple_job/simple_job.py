@@ -42,17 +42,14 @@ job_set = ht.JobSet(exe='./simple_worker_script.sh',
                     copy_exe=True,
                     setup_script=None,
                     filename='simple_job.condor',
-                    out_dir=log_dir,
-                    out_file=log_stem + '.out',
-                    err_dir=log_dir,
-                    err_file=log_stem + '.err',
-                    log_dir=log_dir,
-                    log_file=log_stem + '.log',
+                    out_dir=log_dir, out_file=log_stem + '.out',
+                    err_dir=log_dir, err_file=log_stem + '.err',
+                    log_dir=log_dir, log_file=log_stem + '.log',
                     cpus=1, memory='50MB', disk='1',
                     hdfs_store=HDFS_STORE)
 
 # Now add individual Jobs
-# Here we are runnign our script multiple times, but passing it different
+# Here we are running our script multiple times, but passing it different
 # arguments, and telling it to produce different output files.
 for i, word in enumerate(['Easter', 'NYE', 'Summer']):
     job = ht.Job(manager=job_set,

@@ -3,7 +3,7 @@
 #include <math.h>
 
 // Simple program to print out maximum int and unsigned long long.
-// Complie with: gcc showsize.c -o showsize
+// Compile with: gcc showsize.c -o showsize
 
 int main(int arg, char** argv)
 {
