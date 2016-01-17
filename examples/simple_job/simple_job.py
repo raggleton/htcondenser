@@ -28,24 +28,26 @@ if not os.path.isdir(HDFS_STORE):
     os.makedirs(HDFS_STORE)
 
 # Set location for logs
-LOG_STORE = "/storage/ra12451/simple_job"
+LOG_STORE = "/storage/%s/simple_job" % os.environ['LOGNAME']
 
-if not os.path.idir(LOG_STORE):
+if not os.path.isdir(LOG_STORE):
     os.makedirs(LOG_STORE)
 
+log_dir = os.path.join(LOG_STORE, 'log')
+log_stem = 'simple.$(cluster).$(process)'
 
 # Define a JobSet object for all jobs running the same exe
 # with same configuration for logs, etc
-job_set = ht.JobSet(exe='simple_worker_script.sh',
+job_set = ht.JobSet(exe='./simple_worker_script.sh',
                     copy_exe=True,
                     setup=None,
                     filename='simple_job.condor',
-                    out_dir=os.path.join(LOG_STORE, 'log'),
-                    out_file='simple.$(cluster).$(process).out',
-                    err_dir=os.path.join(LOG_STORE, 'log'),
-                    err_file='simple.$(cluster).$(process).err',
-                    log_dir=os.path.join(LOG_STORE, 'log'),
-                    log_file='simple.$(cluster).$(process).log',
+                    out_dir=log_dir,
+                    out_file=log_stem + '.out',
+                    err_dir=log_dir,
+                    err_file=log_stem + '.err',
+                    log_dir=log_dir,
+                    log_file=log_stem + '.log',
                     cpus=1, memory='50MB', disk='1',
                     hdfs_store=HDFS_STORE)
 
