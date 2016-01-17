@@ -20,6 +20,8 @@ class WorkerArgParser(argparse.ArgumentParser):
         self.add_arguments()
 
     def add_arguments(self):
+        self.add_argument("--setup",
+                          help="Name of script to run to setup programs, etc")
         self.add_argument("--copyToLocal", nargs=2, action='append',
                           help="Files to copy to local area on worker node "
                           "before running program. "
@@ -40,6 +42,7 @@ def run_job(in_args=sys.argv[1:]):
 
     parser = WorkerArgParser(description=__doc__)
     args = parser.parse_args(in_args)
+    print 'Args:'
     print args
 
     # Make sandbox area to avoid names clashing, and stop auto transfer
@@ -68,13 +71,21 @@ def run_job(in_args=sys.argv[1:]):
 
     print os.listdir(os.getcwd())
 
-    # Run the program
+    # Do setup of programs & libs, and run the program
+    # We have to do this in one step to avoid different-shell-weirdness,
+    # since env vars don't necessarily get carried over.
     # -------------------------------------------------------------------------
-    os.chmod(args.exe, 0555)
-    cmds = ["./" + args.exe] + args.args
-    print cmds
-    call(cmds)
+    print 'Doing setup & running'
+    if args.setup:
+        os.chmod(args.setup, 0555)
+        setup_cmd = 'source ./' + args.setup + '; '
 
+    if os.path.isfile(os.path.basename(args.exe)):
+        os.chmod(os.path.basename(args.exe), 0555)
+
+    run_cmd = args.exe + ' ' + ' '.join(args.args)
+    print setup_cmd + run_cmd
+    check_call(setup_cmd + run_cmd, shell=True)
     print os.listdir(os.getcwd())
 
     # Copy files from worker node area to /hdfs or /storage

@@ -28,8 +28,8 @@ class JobSet(object):
     copy_exe: bool
         If True, copies the executable to HDFS.
 
-    setup: TODO
-        TODO
+    setup_script: str
+        Shell script to execute on worker node to setup necessary programs, etc
 
     filename: str
         Filename for HTCondor job description file.
@@ -79,12 +79,17 @@ class JobSet(object):
         must first be stored on /hdfs. This argument specifies the directory
         where those files are stored.
 
+
+    Raises:
+    -------
+    OSError if any of out_file, err_file, or log_file, are blank or '.'
+
     """
 
     def __init__(self,
                  exe,
                  copy_exe=True,
-                 setup=None,
+                 setup_script=None,
                  filename='jobs.condor',
                  out_dir='logs', out_file='$(cluster).$(process).out',
                  err_dir='logs', err_file='$(cluster).$(process).err',
@@ -96,7 +101,7 @@ class JobSet(object):
         super(JobSet, self).__init__()
         self.exe = exe
         self.copy_exe = copy_exe
-        self.setup = setup
+        self.setup_script = setup_script
         self.job_filename = filename
         self.out_dir = os.path.abspath(str(out_dir))
         self.out_file = str(out_file)
@@ -239,6 +244,8 @@ class Job(object):
         self.user_input_files = input_files or []
         if self.manager.copy_exe:
             self.user_input_files.append(self.manager.exe)
+        if self.manager.setup_script:
+            self.user_input_files.append(self.manager.setup_script)
         self.user_output_files = output_files or []
         self.number = int(number)
 
@@ -312,7 +319,9 @@ class Job(object):
         for input and output files, and automatically updating the args to
         account for new locations on HDFS or worker node.
         """
-        job_args = ['arguments=']
+        job_args = ['arguments="']
+        if self.manager.setup_script:
+            job_args.extend(['--setup', os.path.basename(self.manager.setup_script)])
 
         new_args = self.args[:]
 
@@ -344,10 +353,10 @@ class Job(object):
             job_args.extend(['--copyFromLocal', ofile.worker, ofile.hdfs])
 
         # Add the exe
-        job_args.extend(['--exe', self.manager.exe])
+        job_args.extend(['--exe', "'" + os.path.basename(self.manager.exe) + "'"])
 
         # Add arguments for exe
         job_args.append('--args')
         job_args.extend(new_args)
-
+        job_args[-1] = job_args[-1] + '"'
         return ' '.join(job_args)
