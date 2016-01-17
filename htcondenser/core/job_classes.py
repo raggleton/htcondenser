@@ -109,7 +109,7 @@ class JobSet(object):
         self.err_file = str(err_file)
         self.log_dir = os.path.abspath(str(log_dir))
         self.log_file = str(log_file)
-        self.cpus = cpus if cpus >= 1 else 1
+        self.cpus = int(cpus) if int(cpus) >= 1 else 1
         self.memory = str(memory)
         self.disk = str(disk)
         self.transfer_hdfs_input = transfer_hdfs_input
@@ -126,9 +126,6 @@ class JobSet(object):
         for d in [self.out_dir, self.err_dir, self.log_dir, self.hdfs_store]:
             if not os.path.isdir(d):
                 os.makedirs(d)
-
-        # if not os.path.isdir(self.hdfs_store):
-        #     raise OSError('No such directory for hdfs_store argument')
 
         # Check output filenames are not blank
         # ---------------------------------------------------------------------
@@ -353,7 +350,7 @@ class Job(object):
             job_args.extend(['--copyFromLocal', ofile.worker, ofile.hdfs])
 
         # Add the exe
-        job_args.extend(['--exe', "'" + os.path.basename(self.manager.exe) + "'"])
+        job_args.extend(['--exe', "'" + self.manager.exe + "'"])
 
         # Add arguments for exe
         job_args.append('--args')
