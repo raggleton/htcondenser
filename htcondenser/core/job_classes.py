@@ -9,7 +9,7 @@ import logging_config
 import logging
 import os
 import re
-from subprocess import call
+from subprocess import check_call
 from common import cp_hdfs
 
 
@@ -191,7 +191,7 @@ class JobSet(object):
         for job in self.jobs.itervalues():
             job.transfer_to_hdfs()
 
-        call(['condor_submit', self.job_filename])
+        check_call(['condor_submit', self.job_filename])
 
 
 class FileMirror(object):
