@@ -48,16 +48,13 @@ def run_job(in_args=sys.argv[1:]):
     # Make sandbox area to avoid names clashing, and stop auto transfer
     # back to submission node
     # -------------------------------------------------------------------------
-    os.mkdir('scratch')
-    os.chdir('scratch')
-
-    # Do setup of programs & libs
-    # -------------------------------------------------------------------------
-
-    # TODO
+    tmp_dir = 'scratch'
+    os.mkdir(tmp_dir)
+    os.chdir(tmp_dir)
 
     # Copy files to worker node area from /users, /hdfs, /storage, etc.
     # -------------------------------------------------------------------------
+    print 'PRE EXECUTION: Copy to local:'
     for (source, dest) in args.copyToLocal:
         print source, dest
         if source.startswith('/hdfs'):
@@ -90,16 +87,22 @@ def run_job(in_args=sys.argv[1:]):
 
     # Copy files from worker node area to /hdfs or /storage
     # -------------------------------------------------------------------------
+    print 'POST EXECUTION: Copy to HDFS:'
     for (source, dest) in args.copyFromLocal:
         print source, dest
         if dest.startswith('/hdfs'):
             dest = dest.replace('/hdfs', '')
-            call(['hadoop', 'fs', '-copyFromLocal', '-f', source, dest])
+            check_call(['hadoop', 'fs', '-copyFromLocal', '-f', source, dest])
         else:
             if os.path.isfile(source):
                 shutil.copy2(source, dest)
             elif os.path.isdir(source):
                 shutil.copytree(source, dest)
+
+    # Cleanup
+    # -------------------------------------------------------------------------
+    os.chdir('..')
+    shutil.rmtree(tmp_dir)
 
 
 if __name__ == "__main__":
