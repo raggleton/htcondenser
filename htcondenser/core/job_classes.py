@@ -276,7 +276,8 @@ class Job(object):
         """
         for ifile in self.user_input_files:
             basename = os.path.basename(ifile)
-            hdfs_mirror = ifile if ifile.startswith('/hdfs') else os.path.join(hdfs_mirror_dir, basename)
+            hdfs_mirror = (ifile if ifile.startswith('/hdfs')
+                           else os.path.join(hdfs_mirror_dir, basename))
             mirror = FileMirror(original=ifile, hdfs=hdfs_mirror, worker=basename)
             self.input_file_mirrors.append(mirror)
 
@@ -290,7 +291,8 @@ class Job(object):
         """
         for ofile in self.user_output_files:
             basename = os.path.basename(ofile)
-            hdfs_mirror = ofile if ofile.startswith('/hdfs') else os.path.join(hdfs_mirror_dir, basename)
+            hdfs_mirror = (ofile if ofile.startswith('/hdfs')
+                           else os.path.join(hdfs_mirror_dir, basename))
             mirror = FileMirror(original=ofile, hdfs=hdfs_mirror, worker=basename)
             self.output_file_mirrors.append(mirror)
 
