@@ -7,7 +7,7 @@ and execution of a job.
 
 
 import argparse
-from subprocess import call
+from subprocess import check_call
 import sys
 import shutil
 import os
@@ -59,7 +59,7 @@ def run_job(in_args=sys.argv[1:]):
         print source, dest
         if source.startswith('/hdfs'):
             source = source.replace('/hdfs', '')
-            call(['hadoop', 'fs', '-copyToLocal', source, dest])
+            check_call(['hadoop', 'fs', '-copyToLocal', source, dest])
         else:
             if os.path.isfile(source):
                 shutil.copy2(source, dest)
