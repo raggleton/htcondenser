@@ -4,7 +4,7 @@
 import logging_config
 import logging
 import os
-from subprocess import call
+from subprocess import check_call
 import shutil
 
 
@@ -66,7 +66,7 @@ def cp_hdfs(src, dest, force=True):
             cmds.append('-f')
         cmds.extend([src_hdfs, dest_hdfs])
         log.debug(cmds)
-        call(cmds)
+        check_call(cmds)
     else:
         # use normal copy command
         if os.path.isfile(src):
