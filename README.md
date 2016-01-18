@@ -14,7 +14,7 @@ An area on `/hdfs/users` that you have read/write permission. Python >= 2.6 (def
 
 ## How do I get/install it?
 
-TODO
+For now, run `setup.sh`. This will just add the current directory to `PYTHONPATH`. This required every time you login (or add to `~/.bashrc`/`~/.bash_profile`). Needs a better way (pip...).
 
 ## How do I get started?
 
