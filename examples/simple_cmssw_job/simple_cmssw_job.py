@@ -53,7 +53,7 @@ job_set = ht.JobSet(exe='edmDumpEventContent',
 # Now add a Job
 job = ht.Job(manager=job_set,
              name='cmssw_job',
-             args=['root://xrootd.unl.edu//store/express/Run2015D/ExpressPhysics/FEVT/Express-v4/000/258/287/00000/0635BB66-876B-E511-8BB1-02163E013618.root'],
+             args=['root://xrootd.unl.edu//store/mc/RunIISpring15Digi74/QCD_Pt_30to50_TuneCUETP8M1_13TeV_pythia8/GEN-SIM-RAW/AVE_20_BX_25ns_tsg_MCRUN2_74_V7-v1/00000/00228B32-44F0-E411-9FC7-0025905C3DCE.root'],
              input_files=None,
              output_files=None,
              number=1)
