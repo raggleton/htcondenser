@@ -51,6 +51,8 @@ job_set = ht.JobSet(exe='edmDumpEventContent',
                     hdfs_store=HDFS_STORE)
 
 # Now add a Job
+# Note that in this scenario, we are accessing the file over XRootD,
+# and thus we don't need to add it to the input_files argument.
 job = ht.Job(manager=job_set,
              name='cmssw_job',
              args=['root://xrootd.unl.edu//store/mc/RunIISpring15Digi74/QCD_Pt_30to50_TuneCUETP8M1_13TeV_pythia8/GEN-SIM-RAW/AVE_20_BX_25ns_tsg_MCRUN2_74_V7-v1/00000/00228B32-44F0-E411-9FC7-0025905C3DCE.root'],
