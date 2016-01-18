@@ -21,3 +21,5 @@ account_group_user = $ENV(LOGNAME)
 # use the ENV that is provided
 getenv = true
 
+# Need this to pass voms credentials
+use_x509userproxy = True
