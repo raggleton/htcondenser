@@ -74,7 +74,8 @@ def run_job(in_args=sys.argv[1:]):
     # We have to do this in one step to avoid different-shell-weirdness,
     # since env vars don't necessarily get carried over.
     # -------------------------------------------------------------------------
-    print 'Doing setup & running'
+    print 'SETUP AND EXECUTION'
+    setup_cmd = ''
     if args.setup:
         os.chmod(args.setup, 0555)
         setup_cmd = 'source ./' + args.setup + '; '
