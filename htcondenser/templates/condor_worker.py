@@ -54,18 +54,20 @@ def run_job(in_args=sys.argv[1:]):
 
     # Copy files to worker node area from /users, /hdfs, /storage, etc.
     # -------------------------------------------------------------------------
-    print 'PRE EXECUTION: Copy to local:'
-    for (source, dest) in args.copyToLocal:
-        print source, dest
-        if source.startswith('/hdfs'):
-            source = source.replace('/hdfs', '')
-            check_call(['hadoop', 'fs', '-copyToLocal', source, dest])
-        else:
-            if os.path.isfile(source):
-                shutil.copy2(source, dest)
-            elif os.path.isdir(source):
-                shutil.copytree(source, dest)
+    if args.copyToLocal:
+        print 'PRE EXECUTION: Copy to local:'
+        for (source, dest) in args.copyToLocal:
+            print source, dest
+            if source.startswith('/hdfs'):
+                source = source.replace('/hdfs', '')
+                check_call(['hadoop', 'fs', '-copyToLocal', source, dest])
+            else:
+                if os.path.isfile(source):
+                    shutil.copy2(source, dest)
+                elif os.path.isdir(source):
+                    shutil.copytree(source, dest)
 
+    print 'In current dir:'
     print os.listdir(os.getcwd())
 
     # Do setup of programs & libs, and run the program
@@ -83,24 +85,28 @@ def run_job(in_args=sys.argv[1:]):
     run_cmd = args.exe + ' ' + ' '.join(args.args)
     print setup_cmd + run_cmd
     check_call(setup_cmd + run_cmd, shell=True)
+
+    print 'In current dir:'
     print os.listdir(os.getcwd())
 
     # Copy files from worker node area to /hdfs or /storage
     # -------------------------------------------------------------------------
-    print 'POST EXECUTION: Copy to HDFS:'
-    for (source, dest) in args.copyFromLocal:
-        print source, dest
-        if dest.startswith('/hdfs'):
-            dest = dest.replace('/hdfs', '')
-            check_call(['hadoop', 'fs', '-copyFromLocal', '-f', source, dest])
-        else:
-            if os.path.isfile(source):
-                shutil.copy2(source, dest)
-            elif os.path.isdir(source):
-                shutil.copytree(source, dest)
+    if args.copyFromLocal:
+        print 'POST EXECUTION: Copy to HDFS:'
+        for (source, dest) in args.copyFromLocal:
+            print source, dest
+            if dest.startswith('/hdfs'):
+                dest = dest.replace('/hdfs', '')
+                check_call(['hadoop', 'fs', '-copyFromLocal', '-f', source, dest])
+            else:
+                if os.path.isfile(source):
+                    shutil.copy2(source, dest)
+                elif os.path.isdir(source):
+                    shutil.copytree(source, dest)
 
     # Cleanup
     # -------------------------------------------------------------------------
+    print 'CLEANUP'
     os.chdir('..')
     shutil.rmtree(tmp_dir)
 
