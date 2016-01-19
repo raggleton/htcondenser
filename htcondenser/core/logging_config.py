@@ -1,6 +1,6 @@
 """Setup logging module with custom formatter for different severity levels.
 
-To use, do:
+To use:
 
 >>> import logging_config
 >>> import logging
@@ -16,8 +16,8 @@ class LevelFormatter(logging.Formatter, object):
 
     Taken from: https://stackoverflow.com/questions/28635679/python-logging-different-formatters-for-the-same-log-file
 
-    Params:
-    -------
+    Parameters
+    ----------
     fmt: str
         Default format string.
 

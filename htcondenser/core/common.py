@@ -14,14 +14,15 @@ log = logging.getLogger(__name__)
 def check_dir_create(directory):
     """Check to see if directory exists, if not create it.
 
-    Params:
-    -------
-    directory: str
+    Parameters
+    ----------
+    directory : str
         Name of directory to check and create.
 
-    Raises:
+    Raises
     -------
-    IOError if 'directory' already exists but is a file.
+    IOError
+        If 'directory' already exists but is a file.
     """
     if not os.path.isdir(directory):
         # if os.path.isfile(directory):
@@ -35,15 +36,15 @@ def cp_hdfs(src, dest, force=True):
 
     Uses the hadoop commands to ensure same transfer.
 
-    Params:
-    -------
-    src: str
+    Parameters
+    ----------
+    src : str
         Source filepath. For files on HDFS, use the full filepath, /hdfs/...
 
-    dest: str
+    dest : str
         Destination filepath. For files on HDFS, use the full filepath, /hdfs/...
 
-    force: bool
+    force : bool
         If True, will overwrite destination file if it already exists.
     """
     # Check if source and/or destination reside on HDFS

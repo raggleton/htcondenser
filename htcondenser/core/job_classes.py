@@ -1,7 +1,5 @@
 """
-Classes to describe jobs, and other helper classes.
-
-Robin Aggleton
+Classes to describe jobs, groups of jobs, and other helper classes.
 """
 
 
@@ -18,59 +16,60 @@ log = logging.getLogger(__name__)
 
 
 class JobSet(object):
-    """A set of jobs, all sharing a common submission file.
+    """Governs a set of Jobs, all sharing a common submission file, log
+    locations, resource request, and setup procedure.
 
-    Params:
-    -------
-    exe: str
+    Parameters
+    ----------
+    exe : str
         Name of executable for this set of jobs. Note that path must be specified,
         e.g. './myexe'
 
-    copy_exe: bool
+    copy_exe : bool
         If True, copies the executable to HDFS. Set False for builtins e.g. awk
 
-    setup_script: str
+    setup_script : str
         Shell script to execute on worker node to setup necessary programs, libs, etc.
 
-    filename: str
+    filename : str
         Filename for HTCondor job description file.
 
-    out_dir: str
+    out_dir : str
         Directory for STDOUT output. Will be automatically created if it does not
         already exist. Raises an OSError if already exists but is not a directory.
 
-    out_file: str
+    out_file : str
         Filename for STDOUT output.
 
-    err_dir: str
+    err_dir : str
         Directory for STDERR output. Will be automatically created if it does not
         already exist. Raises an OSError if already exists but is not a directory.
 
-    err_file: str
+    err_file : str
         Filename for STDERR output.
 
-    log_dir: str
+    log_dir : str
         Directory for log output. Will be automatically created if it does not
         already exist. Raises an OSError if already exists but is not a directory.
 
-    log_file: str
+    log_file : str
         Filename for log output.
 
-    cpus: int
+    cpus : int
         Number of CPU cores for each job.
 
-    memory: str
+    memory : str
         RAM to request for each job.
 
-    disk: str
+    disk : str
         Disk space to request for each job.
 
-    transfer_hdfs_input: bool
+    transfer_hdfs_input : bool
         If True, transfers input files on HDFS to worker node first.
         Auto-updates program arguments to take this into account.
         Otherwise files are read directly from HDFS.
 
-    transfer_input_files: list[str]
+    transfer_input_files : list[str]
         List of files to be transferred across for each job
         (from initial_dir for relative paths).
         Usage of this argument is highly discouraged (except in scenarios where
@@ -78,7 +77,7 @@ class JobSet(object):
         since it can lock up soolin due to both processor load and network load.
         Recommended to use input_files argument in Job() instead.
 
-    transfer_output_files: list[str]
+    transfer_output_files : list[str]
         List of files to be transferred across after each job
         (to initial_dir for relative paths).
         Usage of this argument is highly discouraged (except in scenarios where
@@ -86,16 +85,17 @@ class JobSet(object):
         since it can lock up soolin due to both processor load and network load.
         Recommended to use output_files argument in Job() instead.
 
-    hdfs_store: str
+    hdfs_store : str
         If any local files (on /user) needs to be transferred to the job, it
         must first be stored on /hdfs. This argument specifies the directory
         where those files are stored. Each job will have its own copy of all
         input files, in a subdirectory with the Job name.
 
 
-    Raises:
-    -------
-    OSError if any of out_file, err_file, or log_file, are blank or '.'
+    Raises
+    ------
+    OSError
+        If any of out_file, err_file, or log_file, are blank or '.'
 
     """
 
@@ -159,13 +159,18 @@ class JobSet(object):
             jfile.write(job_contents)
 
     def generate_job_contents(self, template):
-        """Create a job file from a template, replacing the necessary fields
-        and adding in jobs with arguments.
+        """Create a job file contents from a template, replacing necessary fields
+        and adding in all jobs with necessary arguments.
 
-        Params:
-        -------
-        template: str
+        Parameters
+        ----------
+        template : str
             Job template as a single string, including tokens to be replaced.
+
+        Returns
+        -------
+        str
+            Completed job template.
         """
 
         # Make replacements in template
@@ -224,36 +229,38 @@ class FileMirror(object):
 class Job(object):
     """One job instance in a JobSet, with defined arguments and inputs/outputs.
 
-    Params:
-    -------
-    manager: JobSet
+    Parameters
+    ----------
+    manager : JobSet
 
-    name: str
+    name : str
         Name of this job. Must be unique in this JobSet.
 
-    args: list[str] or str.
+    args : list[str] or str
         Arguments for this job.
 
-    input_files: list[str]
+    input_files : list[str]
         List of input files to be transferred across before running executable.
         If the path is not on HDFS, a copy will be placed on HDFS under
         hdfs_store/job_name. Otherwise, the original on HDFS will be used.
 
-    output_files: list[str]
+    output_files : list[str]
         List of output files to be transferred across to HDFS after executable finishes.
         If the path is on HDFS, then that will be the destination. Otherwise
         hdfs_store/job_name will be used as destination directory.
 
-    number: int
+    number : int
         Quantity of this Job to submit.
 
-    Raises:
-    -------
-    KeyError if the user tries to create a Job in a JobSet which already governs
-    a Job with that name.
+    Raises
+    ------
+    KeyError
+        If the user tries to create a Job in a JobSet which already governs
+        a Job with that name.
 
-    TypeError if the user tries to assign a manager that is not of type JobSet
-    (or a derived class).
+    TypeError
+        If the user tries to assign a manager that is not of type JobSet
+        (or a derived class).
     """
 
     def __init__(self, manager, name, args=None,
@@ -302,9 +309,9 @@ class Job(object):
         Also attaches a location for the worker node, incase the user wishes to
         copy the input file from HDFS to worker node first before processing.
 
-        Params:
-        -------
-        hdfs_mirror_dir: str
+        Parameters
+        ----------
+        hdfs_mirror_dir : str
             Location of directory to store mirrored copies.
         """
         for ifile in self.user_input_files:
@@ -317,9 +324,9 @@ class Job(object):
     def setup_output_file_mirrors(self, hdfs_mirror_dir):
         """Attach a mirror HDFS location for each output file.
 
-        Params:
-        -------
-        hdfs_mirror_dir: str
+        Parameters
+        ----------
+        hdfs_mirror_dir : str
             Location of directory to store mirrored copies.
         """
         for ofile in self.user_output_files:
@@ -342,6 +349,12 @@ class Job(object):
         This includes the user's args (in self.args), but also includes options
         for input and output files, and automatically updating the args to
         account for new locations on HDFS or worker node.
+
+        Returns
+        -------
+        str:
+            Argument string for the job, to be passed to condor_worker.py
+
         """
         job_args = ['arguments="']
         if self.manager.setup_script:
