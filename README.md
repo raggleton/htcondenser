@@ -12,6 +12,8 @@ Note that this probably won't work for more custom or complicated workflows, but
 
 An area on `/hdfs/users` that you have read/write permission. Python >= 2.6 (default on soolin), but untested with Python 3.
 
+For building the docs, you'll need [sphinx](http://www.sphinx-doc.org/en/stable/index.html) (`pip install sphinx`).
+
 ## How do I get/install it?
 
 For now, run `setup.sh`. This will just add the current directory to `PYTHONPATH`. This required every time you login (or add to `~/.bashrc`/`~/.bash_profile`). Needs a better way (pip...).

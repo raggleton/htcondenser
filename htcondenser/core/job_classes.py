@@ -27,7 +27,7 @@ class JobSet(object):
         e.g. './myexe'
 
     copy_exe : bool
-        If True, copies the executable to HDFS. Set False for builtins e.g. awk
+        If `True`, copies the executable to HDFS. Set `False` for builtins e.g. awk
 
     setup_script : str
         Shell script to execute on worker node to setup necessary programs, libs, etc.
@@ -73,22 +73,24 @@ class JobSet(object):
     transfer_input_files : list[str]
         List of files to be transferred across for each job
         (from initial_dir for relative paths).
-        Usage of this argument is highly discouraged (except in scenarios where
-        you have a very small number of jobs, and the file(s) are very small)
-        since it can lock up soolin due to both processor load and network load.
+        **Usage of this argument is highly discouraged**
+        (except in scenarios where you have a very small number of jobs,
+        and the file(s) are very small) since it can lock up soolin due to both
+        processor load and network load.
         Recommended to use input_files argument in Job() instead.
 
     transfer_output_files : list[str]
         List of files to be transferred across after each job
         (to initial_dir for relative paths).
-        Usage of this argument is highly discouraged (except in scenarios where
-        you have a very small number of jobs, and the file(s) are very small)
-        since it can lock up soolin due to both processor load and network load.
+        **Usage of this argument is highly discouraged**
+        (except in scenarios where you have a very small number of jobs,
+        and the file(s) are very small) since it can lock up soolin due to both
+        processor load and network load.
         Recommended to use output_files argument in Job() instead.
 
     hdfs_store : str
-        If any local files (on /user) needs to be transferred to the job, it
-        must first be stored on /hdfs. This argument specifies the directory
+        If any local files (on `/user`) needs to be transferred to the job, it
+        must first be stored on `/hdfs`. This argument specifies the directory
         where those files are stored. Each job will have its own copy of all
         input files, in a subdirectory with the Job name. If this directory does
         not exist, it will be created.
@@ -97,8 +99,10 @@ class JobSet(object):
     Raises
     ------
     OSError
-        If any of out_file, err_file, or log_file, are blank or '.'.
-        If any of out_dir, err_dir, log_dir, hdfs_store cannot be created.
+        If any of `out_file`, `err_file`, or `log_file`, are blank or '.'.
+
+    OSError
+        If any of `out_dir`, `err_dir`, `log_dir`, `hdfs_store` cannot be created.
 
     """
 
@@ -141,7 +145,7 @@ class JobSet(object):
         # ---------------------------------------------------------------------
         for d in [self.out_dir, self.err_dir, self.log_dir, self.hdfs_store]:
             if not os.path.isdir(d):
-                log.info('Making directory %s' , d)
+                log.info('Making directory %s', d)
                 os.makedirs(d)
 
         # Check output filenames are not blank
@@ -236,9 +240,12 @@ class Job(object):
     Parameters
     ----------
     manager : JobSet
+        JobSet object that will be responsible for this Job. The Job will
+        inherit settings from the manager, such as executable, log directories,
+        resource request, and setup procedure.
 
     name : str
-        Name of this job. Must be unique in this JobSet.
+        Name of this job. Must be unique in the managing JobSet.
 
     args : list[str] or str
         Arguments for this job.
@@ -246,12 +253,12 @@ class Job(object):
     input_files : list[str]
         List of input files to be transferred across before running executable.
         If the path is not on HDFS, a copy will be placed on HDFS under
-        hdfs_store/job_name. Otherwise, the original on HDFS will be used.
+        `hdfs_store`/`job.name`. Otherwise, the original on HDFS will be used.
 
     output_files : list[str]
         List of output files to be transferred across to HDFS after executable finishes.
         If the path is on HDFS, then that will be the destination. Otherwise
-        hdfs_store/job_name will be used as destination directory.
+        `hdfs_store`/`job.name` will be used as destination directory.
 
     quantity : int
         Quantity of this Job to submit.
@@ -350,7 +357,7 @@ class Job(object):
     def generate_job_arg_str(self):
         """Generate arg string to pass to the condor_worker.py script.
 
-        This includes the user's args (in self.args), but also includes options
+        This includes the user's args (in `self.args`), but also includes options
         for input and output files, and automatically updating the args to
         account for new locations on HDFS or worker node.
 

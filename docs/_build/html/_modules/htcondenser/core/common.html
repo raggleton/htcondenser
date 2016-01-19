@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>htcondenser.core.common &mdash; htcondenser 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="htcondenser 0.1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">htcondenser 0.1 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for htcondenser.core.common</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;Functions that are commonly used.&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">logging_config</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">check_call</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="check_dir_create"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.common.check_dir_create">[docs]</a><span class="k">def</span> <span class="nf">check_dir_create</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check to see if directory exists, if not create it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    directory : str</span>
+<span class="sd">        Name of directory to check and create.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    -------</span>
+<span class="sd">    IOError</span>
+<span class="sd">        If &#39;directory&#39; already exists but is a file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+        <span class="c"># if os.path.isfile(directory):</span>
+        <span class="c">#     log.error(&#39;%s exists but is a file&#39; % directory)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cp_hdfs"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.common.cp_hdfs">[docs]</a><span class="k">def</span> <span class="nf">cp_hdfs</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Copy file between src and destination, allowing for one or both to</span>
+<span class="sd">    be on HDFS.</span>
+
+<span class="sd">    Uses the hadoop commands if possible to ensure safe transfer.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    src : str</span>
+<span class="sd">        Source filepath. For files on HDFS, use the full filepath, /hdfs/...</span>
+
+<span class="sd">    dest : str</span>
+<span class="sd">        Destination filepath. For files on HDFS, use the full filepath, /hdfs/...</span>
+
+<span class="sd">    force : bool</span>
+<span class="sd">        If True, will overwrite destination file if it already exists.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># Check if source and/or destination reside on HDFS</span>
+    <span class="n">flag_src_hdfs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&quot;/hdfs&quot;</span><span class="p">)</span>
+    <span class="n">flag_dest_hdfs</span> <span class="o">=</span> <span class="n">dest</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&quot;/hdfs&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">flag_src_hdfs</span> <span class="ow">or</span> <span class="n">flag_dest_hdfs</span><span class="p">:</span>
+        <span class="c"># Create HDFS-compatible paths</span>
+        <span class="n">src_hdfs</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;/hdfs&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">flag_src_hdfs</span> <span class="k">else</span> <span class="n">src</span>
+        <span class="n">dest_hdfs</span> <span class="o">=</span> <span class="n">dest</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;/hdfs&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">flag_dest_hdfs</span> <span class="k">else</span> <span class="n">dest</span>
+
+        <span class="c"># use hadoop command</span>
+        <span class="n">hadoop_cmd</span> <span class="o">=</span> <span class="s">&#39;-cp&#39;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">flag_dest_hdfs</span><span class="p">:</span>
+            <span class="n">hadoop_cmd</span> <span class="o">=</span> <span class="s">&#39;-copyToLocal&#39;</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">flag_src_hdfs</span><span class="p">:</span>
+            <span class="n">hadoop_cmd</span> <span class="o">=</span> <span class="s">&#39;-copyFromLocal&#39;</span>
+        <span class="n">cmds</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;hadoop&#39;</span><span class="p">,</span> <span class="s">&#39;fs&#39;</span><span class="p">,</span> <span class="n">hadoop_cmd</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">force</span><span class="p">:</span>
+            <span class="n">cmds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;-f&#39;</span><span class="p">)</span>
+        <span class="n">cmds</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">src_hdfs</span><span class="p">,</span> <span class="n">dest_hdfs</span><span class="p">])</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">cmds</span><span class="p">)</span>
+        <span class="n">check_call</span><span class="p">(</span><span class="n">cmds</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># use normal copy command</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy2</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copytree</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">htcondenser 0.1 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Robin Aggleton.
+      Last updated on Jan 19, 2016.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.4.
+    </div>
+  </body>
+</html>

@@ -34,7 +34,7 @@ def cp_hdfs(src, dest, force=True):
     """Copy file between src and destination, allowing for one or both to
     be on HDFS.
 
-    Uses the hadoop commands to ensure same transfer.
+    Uses the hadoop commands if possible to ensure safe transfer.
 
     Parameters
     ----------

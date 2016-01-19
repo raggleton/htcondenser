@@ -20,4 +20,11 @@ Use `flake8` to check PEP8 and pylint errors. In the root directory, just run `f
 
 Indents are 4 spaces. `CamelCase` for classes, `lower_case` for functions and variable names. The exception is a module-wide variable, which should be `ALL_CAPS`.
 
-Docstrings should be in numpy style.
+Docstrings should be in numpy style, suitable for use with sphinx + napoleon extension: [https://sphinxcontrib-napoleon.readthedocs.org/en/latest/](https://sphinxcontrib-napoleon.readthedocs.org/en/latest/)
+
+To make the documentation, do:
+
+```
+cd docs
+make html  # or latexpdf or ...
+```

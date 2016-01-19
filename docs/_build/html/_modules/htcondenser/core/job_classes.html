@@ -1,0 +1,503 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>htcondenser.core.job_classes &mdash; htcondenser 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="top" title="htcondenser 0.1 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">htcondenser 0.1 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for htcondenser.core.job_classes</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Classes to describe jobs, groups of jobs, and other helper classes.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">logging_config</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">check_call</span>
+<span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">cp_hdfs</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+<span class="n">log</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="JobSet"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.job_classes.JobSet">[docs]</a><span class="k">class</span> <span class="nc">JobSet</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Governs a set of Jobs, all sharing a common submission file, log</span>
+<span class="sd">    locations, resource request, and setup procedure.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    exe : str</span>
+<span class="sd">        Name of executable for this set of jobs. Note that path must be specified,</span>
+<span class="sd">        e.g. &#39;./myexe&#39;</span>
+
+<span class="sd">    copy_exe : bool</span>
+<span class="sd">        If `True`, copies the executable to HDFS. Set `False` for builtins e.g. awk</span>
+
+<span class="sd">    setup_script : str</span>
+<span class="sd">        Shell script to execute on worker node to setup necessary programs, libs, etc.</span>
+
+<span class="sd">    filename : str</span>
+<span class="sd">        Filename for HTCondor job description file.</span>
+
+<span class="sd">    out_dir : str</span>
+<span class="sd">        Directory for STDOUT output. Will be automatically created if it does not</span>
+<span class="sd">        already exist. Raises an OSError if already exists but is not a directory.</span>
+
+<span class="sd">    out_file : str</span>
+<span class="sd">        Filename for STDOUT output.</span>
+
+<span class="sd">    err_dir : str</span>
+<span class="sd">        Directory for STDERR output. Will be automatically created if it does not</span>
+<span class="sd">        already exist. Raises an OSError if already exists but is not a directory.</span>
+
+<span class="sd">    err_file : str</span>
+<span class="sd">        Filename for STDERR output.</span>
+
+<span class="sd">    log_dir : str</span>
+<span class="sd">        Directory for log output. Will be automatically created if it does not</span>
+<span class="sd">        already exist. Raises an OSError if already exists but is not a directory.</span>
+
+<span class="sd">    log_file : str</span>
+<span class="sd">        Filename for log output.</span>
+
+<span class="sd">    cpus : int</span>
+<span class="sd">        Number of CPU cores for each job.</span>
+
+<span class="sd">    memory : str</span>
+<span class="sd">        RAM to request for each job.</span>
+
+<span class="sd">    disk : str</span>
+<span class="sd">        Disk space to request for each job.</span>
+
+<span class="sd">    transfer_hdfs_input : bool</span>
+<span class="sd">        If True, transfers input files on HDFS to worker node first.</span>
+<span class="sd">        Auto-updates program arguments to take this into account.</span>
+<span class="sd">        Otherwise files are read directly from HDFS.</span>
+
+<span class="sd">    transfer_input_files : list[str]</span>
+<span class="sd">        List of files to be transferred across for each job</span>
+<span class="sd">        (from initial_dir for relative paths).</span>
+<span class="sd">        **Usage of this argument is highly discouraged**</span>
+<span class="sd">        (except in scenarios where you have a very small number of jobs,</span>
+<span class="sd">        and the file(s) are very small) since it can lock up soolin due to both</span>
+<span class="sd">        processor load and network load.</span>
+<span class="sd">        Recommended to use input_files argument in Job() instead.</span>
+
+<span class="sd">    transfer_output_files : list[str]</span>
+<span class="sd">        List of files to be transferred across after each job</span>
+<span class="sd">        (to initial_dir for relative paths).</span>
+<span class="sd">        **Usage of this argument is highly discouraged**</span>
+<span class="sd">        (except in scenarios where you have a very small number of jobs,</span>
+<span class="sd">        and the file(s) are very small) since it can lock up soolin due to both</span>
+<span class="sd">        processor load and network load.</span>
+<span class="sd">        Recommended to use output_files argument in Job() instead.</span>
+
+<span class="sd">    hdfs_store : str</span>
+<span class="sd">        If any local files (on `/user`) needs to be transferred to the job, it</span>
+<span class="sd">        must first be stored on `/hdfs`. This argument specifies the directory</span>
+<span class="sd">        where those files are stored. Each job will have its own copy of all</span>
+<span class="sd">        input files, in a subdirectory with the Job name. If this directory does</span>
+<span class="sd">        not exist, it will be created.</span>
+
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    OSError</span>
+<span class="sd">        If any of `out_file`, `err_file`, or `log_file`, are blank or &#39;.&#39;.</span>
+
+<span class="sd">    OSError</span>
+<span class="sd">        If any of `out_dir`, `err_dir`, `log_dir`, `hdfs_store` cannot be created.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">exe</span><span class="p">,</span>
+                 <span class="n">copy_exe</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                 <span class="n">setup_script</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">filename</span><span class="o">=</span><span class="s">&#39;jobs.condor&#39;</span><span class="p">,</span>
+                 <span class="n">out_dir</span><span class="o">=</span><span class="s">&#39;logs&#39;</span><span class="p">,</span> <span class="n">out_file</span><span class="o">=</span><span class="s">&#39;$(cluster).$(process).out&#39;</span><span class="p">,</span>
+                 <span class="n">err_dir</span><span class="o">=</span><span class="s">&#39;logs&#39;</span><span class="p">,</span> <span class="n">err_file</span><span class="o">=</span><span class="s">&#39;$(cluster).$(process).err&#39;</span><span class="p">,</span>
+                 <span class="n">log_dir</span><span class="o">=</span><span class="s">&#39;logs&#39;</span><span class="p">,</span> <span class="n">log_file</span><span class="o">=</span><span class="s">&#39;$(cluster).$(process).log&#39;</span><span class="p">,</span>
+                 <span class="n">cpus</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">memory</span><span class="o">=</span><span class="s">&#39;100MB&#39;</span><span class="p">,</span> <span class="n">disk</span><span class="o">=</span><span class="s">&#39;100MB&#39;</span><span class="p">,</span>
+                 <span class="n">transfer_hdfs_input</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                 <span class="n">transfer_input_files</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">transfer_output_files</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">hdfs_store</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">JobSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exe</span> <span class="o">=</span> <span class="n">exe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy_exe</span> <span class="o">=</span> <span class="n">copy_exe</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_script</span> <span class="o">=</span> <span class="n">setup_script</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">out_dir</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">err_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">err_dir</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">err_file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">err_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">log_dir</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">log_file</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cpus</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">cpus</span><span class="p">)</span> <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">cpus</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">memory</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">memory</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">disk</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">disk</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transfer_hdfs_input</span> <span class="o">=</span> <span class="n">transfer_hdfs_input</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transfer_input_files</span> <span class="o">=</span> <span class="n">transfer_input_files</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transfer_output_files</span> <span class="o">=</span> <span class="n">transfer_output_files</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hdfs_store</span> <span class="o">=</span> <span class="n">hdfs_store</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">job_template</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;../templates/job.condor&#39;</span><span class="p">)</span>
+
+        <span class="c"># Hold all Job object this JobSet governs, key is Job name.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+        <span class="c"># Setup directories</span>
+        <span class="c"># ---------------------------------------------------------------------</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hdfs_store</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Making directory </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="c"># Check output filenames are not blank</span>
+        <span class="c"># ---------------------------------------------------------------------</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">out_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="p">]:</span>
+            <span class="n">bad_filenames</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="s">&#39;.&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">bad_filenames</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="s">&#39;Bad output filename&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="JobSet.write"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.job_classes.JobSet.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write jobs to HTCondor job file.&quot;&quot;&quot;</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">job_template</span><span class="p">)</span> <span class="k">as</span> <span class="n">tfile</span><span class="p">:</span>
+            <span class="n">template</span> <span class="o">=</span> <span class="n">tfile</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+        <span class="n">job_contents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_job_contents</span><span class="p">(</span><span class="n">template</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">job_filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">jfile</span><span class="p">:</span>
+            <span class="n">jfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">job_contents</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="JobSet.generate_job_contents"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.job_classes.JobSet.generate_job_contents">[docs]</a>    <span class="k">def</span> <span class="nf">generate_job_contents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">template</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a job file contents from a template, replacing necessary fields</span>
+<span class="sd">        and adding in all jobs with necessary arguments.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        template : str</span>
+<span class="sd">            Job template as a single string, including tokens to be replaced.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Completed job template.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c"># Make replacements in template</span>
+        <span class="n">replacement_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s">&#39;EXE_WRAPPER&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s">&#39;../templates/condor_worker.py&#39;</span><span class="p">),</span>
+            <span class="s">&#39;STDOUT&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">out_file</span><span class="p">),</span>
+            <span class="s">&#39;STDERR&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">err_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">err_file</span><span class="p">),</span>
+            <span class="s">&#39;STDLOG&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_file</span><span class="p">),</span>
+            <span class="s">&#39;CPUS&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cpus</span><span class="p">),</span>
+            <span class="s">&#39;MEMORY&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">memory</span><span class="p">,</span>
+            <span class="s">&#39;DISK&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">disk</span><span class="p">,</span>
+            <span class="s">&#39;TRANSFER_INPUT_FILES&#39;</span><span class="p">:</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transfer_input_files</span><span class="p">),</span>
+            <span class="s">&#39;TRANSFER_OUTPUT_FILES&#39;</span><span class="p">:</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transfer_input_files</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">replacement</span> <span class="ow">in</span> <span class="n">replacement_dict</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">template</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&quot;{</span><span class="si">%s</span><span class="s">}&quot;</span> <span class="o">%</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">replacement</span><span class="p">)</span>
+
+        <span class="c"># Add jobs</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">template</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s"># </span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">name</span>
+            <span class="n">template</span> <span class="o">+=</span> <span class="n">job</span><span class="o">.</span><span class="n">generate_job_arg_str</span><span class="p">()</span>
+            <span class="n">template</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">queue </span><span class="si">%d</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">job</span><span class="o">.</span><span class="n">quantity</span>
+
+        <span class="c"># Check we haven&#39;t left any unused tokens in the template.</span>
+        <span class="c"># If we have, then remove them.</span>
+        <span class="n">leftover_tokens</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s">r&#39;{\w*}&#39;</span><span class="p">,</span> <span class="n">template</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">leftover_tokens</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;Leftover tokens in job file:&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">leftover_tokens</span><span class="p">:</span>
+            <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">tok</span><span class="p">)</span>
+            <span class="n">template</span> <span class="o">=</span> <span class="n">template</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">template</span></div>
+
+<div class="viewcode-block" id="JobSet.submit"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.job_classes.JobSet.submit">[docs]</a>    <span class="k">def</span> <span class="nf">submit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write HTCondor job file, copy necessary files to HDFS, and submit.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">itervalues</span><span class="p">():</span>
+            <span class="n">job</span><span class="o">.</span><span class="n">transfer_to_hdfs</span><span class="p">()</span>
+
+        <span class="n">check_call</span><span class="p">([</span><span class="s">&#39;condor_submit&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">job_filename</span><span class="p">])</span></div></div>
+
+
+<div class="viewcode-block" id="FileMirror"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.job_classes.FileMirror">[docs]</a><span class="k">class</span> <span class="nc">FileMirror</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple class to store location of mirrored files: the original,</span>
+<span class="sd">    the copy of HDFS, and the copy on the worker node.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">original</span><span class="p">,</span> <span class="n">hdfs</span><span class="p">,</span> <span class="n">worker</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FileMirror</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original</span> <span class="o">=</span> <span class="n">original</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hdfs</span> <span class="o">=</span> <span class="n">hdfs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">worker</span> <span class="o">=</span> <span class="n">worker</span></div>
+
+
+<div class="viewcode-block" id="Job"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.job_classes.Job">[docs]</a><span class="k">class</span> <span class="nc">Job</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;One job instance in a JobSet, with defined arguments and inputs/outputs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    manager : JobSet</span>
+<span class="sd">        JobSet object that will be responsible for this Job. The Job will</span>
+<span class="sd">        inherit settings from the manager, such as executable, log directories,</span>
+<span class="sd">        resource request, and setup procedure.</span>
+
+<span class="sd">    name : str</span>
+<span class="sd">        Name of this job. Must be unique in the managing JobSet.</span>
+
+<span class="sd">    args : list[str] or str</span>
+<span class="sd">        Arguments for this job.</span>
+
+<span class="sd">    input_files : list[str]</span>
+<span class="sd">        List of input files to be transferred across before running executable.</span>
+<span class="sd">        If the path is not on HDFS, a copy will be placed on HDFS under</span>
+<span class="sd">        `hdfs_store`/`job.name`. Otherwise, the original on HDFS will be used.</span>
+
+<span class="sd">    output_files : list[str]</span>
+<span class="sd">        List of output files to be transferred across to HDFS after executable finishes.</span>
+<span class="sd">        If the path is on HDFS, then that will be the destination. Otherwise</span>
+<span class="sd">        `hdfs_store`/`job.name` will be used as destination directory.</span>
+
+<span class="sd">    quantity : int</span>
+<span class="sd">        Quantity of this Job to submit.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If the user tries to create a Job in a JobSet which already governs</span>
+<span class="sd">        a Job with that name.</span>
+
+<span class="sd">    TypeError</span>
+<span class="sd">        If the user tries to assign a manager that is not of type JobSet</span>
+<span class="sd">        (or a derived class).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">input_files</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">output_files</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">quantity</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Job</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_manager</span> <span class="o">=</span> <span class="n">manager</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_input_files</span> <span class="o">=</span> <span class="n">input_files</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">copy_exe</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user_input_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">exe</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">setup_script</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">user_input_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">setup_script</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_output_files</span> <span class="o">=</span> <span class="n">output_files</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">jobs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&#39;Job with name </span><span class="si">%s</span><span class="s"> already in this JobSet.&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="c"># Setup file mirroring on HDFS</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_file_mirrors</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c"># input original, mirror on HDFS, and worker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_file_mirrors</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c"># output mirror on HDFS, and worker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hdfs_mirror_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">hdfs_store</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hdfs_mirror_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hdfs_mirror_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_input_file_mirrors</span><span class="p">(</span><span class="n">hdfs_mirror_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hdfs_mirror_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_output_file_mirrors</span><span class="p">(</span><span class="n">hdfs_mirror_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hdfs_mirror_dir</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_manager</span>
+
+    <span class="nd">@manager.setter</span>
+    <span class="k">def</span> <span class="nf">manager</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">manager</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="n">JobSet</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_manager</span> <span class="o">=</span> <span class="n">manager</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Incorrect object type set as Job manager - requires a JobSet object&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Job.setup_input_file_mirrors"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.job_classes.Job.setup_input_file_mirrors">[docs]</a>    <span class="k">def</span> <span class="nf">setup_input_file_mirrors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hdfs_mirror_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Attach a mirror HDFS location for each non-HDFS input file.</span>
+<span class="sd">        Also attaches a location for the worker node, incase the user wishes to</span>
+<span class="sd">        copy the input file from HDFS to worker node first before processing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        hdfs_mirror_dir : str</span>
+<span class="sd">            Location of directory to store mirrored copies.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">ifile</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_input_files</span><span class="p">:</span>
+            <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">ifile</span><span class="p">)</span>
+            <span class="n">hdfs_mirror</span> <span class="o">=</span> <span class="p">(</span><span class="n">ifile</span> <span class="k">if</span> <span class="n">ifile</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/hdfs&#39;</span><span class="p">)</span>
+                           <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">hdfs_mirror_dir</span><span class="p">,</span> <span class="n">basename</span><span class="p">))</span>
+            <span class="n">mirror</span> <span class="o">=</span> <span class="n">FileMirror</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">ifile</span><span class="p">,</span> <span class="n">hdfs</span><span class="o">=</span><span class="n">hdfs_mirror</span><span class="p">,</span> <span class="n">worker</span><span class="o">=</span><span class="n">basename</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_file_mirrors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mirror</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Job.setup_output_file_mirrors"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.job_classes.Job.setup_output_file_mirrors">[docs]</a>    <span class="k">def</span> <span class="nf">setup_output_file_mirrors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hdfs_mirror_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Attach a mirror HDFS location for each output file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        hdfs_mirror_dir : str</span>
+<span class="sd">            Location of directory to store mirrored copies.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">ofile</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_output_files</span><span class="p">:</span>
+            <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">ofile</span><span class="p">)</span>
+            <span class="n">hdfs_mirror</span> <span class="o">=</span> <span class="p">(</span><span class="n">ofile</span> <span class="k">if</span> <span class="n">ofile</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/hdfs&#39;</span><span class="p">)</span>
+                           <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">hdfs_mirror_dir</span><span class="p">,</span> <span class="n">basename</span><span class="p">))</span>
+            <span class="n">mirror</span> <span class="o">=</span> <span class="n">FileMirror</span><span class="p">(</span><span class="n">original</span><span class="o">=</span><span class="n">ofile</span><span class="p">,</span> <span class="n">hdfs</span><span class="o">=</span><span class="n">hdfs_mirror</span><span class="p">,</span> <span class="n">worker</span><span class="o">=</span><span class="n">basename</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_file_mirrors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mirror</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Job.transfer_to_hdfs"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.job_classes.Job.transfer_to_hdfs">[docs]</a>    <span class="k">def</span> <span class="nf">transfer_to_hdfs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Transfer files across to HDFS.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">ifile</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_file_mirrors</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ifile</span><span class="o">.</span><span class="n">original</span> <span class="o">!=</span> <span class="n">ifile</span><span class="o">.</span><span class="n">hdfs</span><span class="p">:</span>
+                <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Copying </span><span class="si">%s</span><span class="s"> to </span><span class="si">%s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">ifile</span><span class="o">.</span><span class="n">original</span><span class="p">,</span> <span class="n">ifile</span><span class="o">.</span><span class="n">hdfs</span><span class="p">)</span>
+                <span class="n">cp_hdfs</span><span class="p">(</span><span class="n">ifile</span><span class="o">.</span><span class="n">original</span><span class="p">,</span> <span class="n">ifile</span><span class="o">.</span><span class="n">hdfs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Job.generate_job_arg_str"><a class="viewcode-back" href="../../../htcondenser.core.html#htcondenser.core.job_classes.Job.generate_job_arg_str">[docs]</a>    <span class="k">def</span> <span class="nf">generate_job_arg_str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate arg string to pass to the condor_worker.py script.</span>
+
+<span class="sd">        This includes the user&#39;s args (in `self.args`), but also includes options</span>
+<span class="sd">        for input and output files, and automatically updating the args to</span>
+<span class="sd">        account for new locations on HDFS or worker node.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str:</span>
+<span class="sd">            Argument string for the job, to be passed to condor_worker.py</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">job_args</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;arguments=&quot;&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">setup_script</span><span class="p">:</span>
+            <span class="n">job_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s">&#39;--setup&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">setup_script</span><span class="p">)])</span>
+
+        <span class="n">new_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">[:]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">transfer_hdfs_input</span><span class="p">:</span>
+            <span class="c"># Replace input files in exe args with their worker node copies</span>
+            <span class="k">for</span> <span class="n">ifile</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_file_mirrors</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">new_args</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="n">ifile</span><span class="o">.</span><span class="n">original</span><span class="p">:</span>
+                        <span class="n">new_args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ifile</span><span class="o">.</span><span class="n">worker</span>
+
+                <span class="c"># Add input files to be transferred across</span>
+                <span class="n">job_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s">&#39;--copyToLocal&#39;</span><span class="p">,</span> <span class="n">ifile</span><span class="o">.</span><span class="n">hdfs</span><span class="p">,</span> <span class="n">ifile</span><span class="o">.</span><span class="n">worker</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># Replace input files in exe args with their HDFS node copies</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">new_args</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">ifile</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_file_mirrors</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="n">ifile</span><span class="o">.</span><span class="n">original</span><span class="p">:</span>
+                        <span class="n">new_args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ifile</span><span class="o">.</span><span class="n">hdfs</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;New job args:&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">new_args</span><span class="p">)</span>
+
+        <span class="c"># Add output files to be transferred across</span>
+        <span class="c"># Replace output files in exe args with their worker node copies</span>
+        <span class="k">for</span> <span class="n">ofile</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_file_mirrors</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">new_args</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="n">ofile</span><span class="o">.</span><span class="n">original</span> <span class="ow">or</span> <span class="n">arg</span> <span class="o">==</span> <span class="n">ofile</span><span class="o">.</span><span class="n">hdfs</span><span class="p">:</span>
+                    <span class="n">new_args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ofile</span><span class="o">.</span><span class="n">worker</span>
+            <span class="n">job_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s">&#39;--copyFromLocal&#39;</span><span class="p">,</span> <span class="n">ofile</span><span class="o">.</span><span class="n">worker</span><span class="p">,</span> <span class="n">ofile</span><span class="o">.</span><span class="n">hdfs</span><span class="p">])</span>
+
+        <span class="c"># Add the exe</span>
+        <span class="n">job_args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s">&#39;--exe&#39;</span><span class="p">,</span> <span class="s">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">exe</span> <span class="o">+</span> <span class="s">&quot;&#39;&quot;</span><span class="p">])</span>
+
+        <span class="c"># Add arguments for exe</span>
+        <span class="n">job_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;--args&#39;</span><span class="p">)</span>
+        <span class="n">job_args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_args</span><span class="p">)</span>
+        <span class="n">job_args</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">job_args</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;&quot;&#39;</span>
+        <span class="k">return</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">job_args</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">htcondenser 0.1 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2016, Robin Aggleton.
+      Last updated on Jan 19, 2016.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.4.
+    </div>
+  </body>
+</html>
