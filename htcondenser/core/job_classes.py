@@ -13,6 +13,7 @@ from collections import OrderedDict
 
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 class JobSet(object):
@@ -89,13 +90,15 @@ class JobSet(object):
         If any local files (on /user) needs to be transferred to the job, it
         must first be stored on /hdfs. This argument specifies the directory
         where those files are stored. Each job will have its own copy of all
-        input files, in a subdirectory with the Job name.
+        input files, in a subdirectory with the Job name. If this directory does
+        not exist, it will be created.
 
 
     Raises
     ------
     OSError
-        If any of out_file, err_file, or log_file, are blank or '.'
+        If any of out_file, err_file, or log_file, are blank or '.'.
+        If any of out_dir, err_dir, log_dir, hdfs_store cannot be created.
 
     """
 
@@ -138,6 +141,7 @@ class JobSet(object):
         # ---------------------------------------------------------------------
         for d in [self.out_dir, self.err_dir, self.log_dir, self.hdfs_store]:
             if not os.path.isdir(d):
+                log.info('Making directory %s' , d)
                 os.makedirs(d)
 
         # Check output filenames are not blank
@@ -199,9 +203,9 @@ class JobSet(object):
         # If we have, then remove them.
         leftover_tokens = re.findall(r'{\w*}', template)
         if leftover_tokens:
-            log.info('Leftover tokens in job file:')
+            log.debug('Leftover tokens in job file:')
         for tok in leftover_tokens:
-            log.info('%s' % tok)
+            log.debug('%s' % tok)
             template = template.replace(tok, '')
 
         return template
