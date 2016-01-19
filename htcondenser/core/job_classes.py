@@ -218,7 +218,7 @@ class Job(object):
     name: str
         Name of this job. Must be unique in this JobSet.
 
-    args: list[str]
+    args: list[str] or str.
         Arguments for this job.
 
     input_files: list[str]
@@ -238,6 +238,8 @@ class Job(object):
         self._manager = manager
         self.name = str(name)
         self.args = args or []
+        if isinstance(args, str):
+            self.args = args.split()
         self.user_input_files = input_files or []
         if self.manager.copy_exe:
             self.user_input_files.append(self.manager.exe)
