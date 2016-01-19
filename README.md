@@ -26,6 +26,12 @@ Look in the `examples` directory. There are several directories, each designed t
 
 - [`simple_cmssw_job/simple_cmssw_job.py`](examples/simple_cmssw_job/simple_cmssw_job.py): setup a CMSSW environment and run `edmDumpEventContent` inside it.
 
+## A bit more detail
+
+The aim of this library is to make submitting jobs to HTCondor a breeze. In particular, it is designed to make the setting up of libraries & programs, as well as transport of any input/output files, as simple as possible.
+
+Each job is represented by a `Job` object. A group of `Job`s is governed by a `JobSet` object. All `Job`s in the group share common settings: they run the same executable, same setup commands, output to same log directory, and require the same resources. 1 `JobSet` = 1 HTCondor job description file. Individual `Job`s within a `JobSet` can have different arguments, and different input/output files.
+
 ## But I want XYZ!
 
 Log an Issue, make a PR, or email me directly.

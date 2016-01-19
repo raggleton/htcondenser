@@ -23,13 +23,14 @@ class JobSet(object):
     Params:
     -------
     exe: str
-        Name of executable for this set of jobs.
+        Name of executable for this set of jobs. Note that path must be specified,
+        e.g. './myexe'
 
     copy_exe: bool
-        If True, copies the executable to HDFS.
+        If True, copies the executable to HDFS. Set False for builtins e.g. awk
 
     setup_script: str
-        Shell script to execute on worker node to setup necessary programs, etc
+        Shell script to execute on worker node to setup necessary programs, libs, etc.
 
     filename: str
         Filename for HTCondor job description file.
@@ -67,17 +68,29 @@ class JobSet(object):
     transfer_hdfs_input: bool
         If True, transfers input files on HDFS to worker node first.
         Auto-updates program arguments to take this into account.
+        Otherwise files are read directly from HDFS.
 
     transfer_input_files: list[str]
-        List of files to be transferred across for each job. See notes in README.
+        List of files to be transferred across for each job
+        (from initial_dir for relative paths).
+        Usage of this argument is highly discouraged (except in scenarios where
+        you have a very small number of jobs, and the file(s) are very small)
+        since it can lock up soolin due to both processor load and network load.
+        Recommended to use input_files argument in Job() instead.
 
     transfer_output_files: list[str]
-        List of files to be transferred across for each job. See notes in README.
+        List of files to be transferred across after each job
+        (to initial_dir for relative paths).
+        Usage of this argument is highly discouraged (except in scenarios where
+        you have a very small number of jobs, and the file(s) are very small)
+        since it can lock up soolin due to both processor load and network load.
+        Recommended to use output_files argument in Job() instead.
 
     hdfs_store: str
         If any local files (on /user) needs to be transferred to the job, it
         must first be stored on /hdfs. This argument specifies the directory
-        where those files are stored.
+        where those files are stored. Each job will have its own copy of all
+        input files, in a subdirectory with the Job name.
 
 
     Raises:
@@ -181,9 +194,9 @@ class JobSet(object):
         # If we have, then remove them.
         leftover_tokens = re.findall(r'{\w*}', template)
         if leftover_tokens:
-            log.warning('Leftover tokens in job file:')
+            log.info('Leftover tokens in job file:')
         for tok in leftover_tokens:
-            log.warning('%s' % tok)
+            log.info('%s' % tok)
             template = template.replace(tok, '')
 
         return template
@@ -209,7 +222,7 @@ class FileMirror(object):
 
 
 class Job(object):
-    """One job instance in a JobSet, with defined arguments and in/outputs.
+    """One job instance in a JobSet, with defined arguments and inputs/outputs.
 
     Params:
     -------
@@ -223,12 +236,24 @@ class Job(object):
 
     input_files: list[str]
         List of input files to be transferred across before running executable.
+        If the path is not on HDFS, a copy will be placed on HDFS under
+        hdfs_store/job_name. Otherwise, the original on HDFS will be used.
 
     output_files: list[str]
         List of output files to be transferred across to HDFS after executable finishes.
+        If the path is on HDFS, then that will be the destination. Otherwise
+        hdfs_store/job_name will be used as destination directory.
 
     number: int
-        Number of this Job object to submit.
+        Quantity of this Job to submit.
+
+    Raises:
+    -------
+    KeyError if the user tries to create a Job in a JobSet which already governs
+    a Job with that name.
+
+    TypeError if the user tries to assign a manager that is not of type JobSet
+    (or a derived class).
     """
 
     def __init__(self, manager, name, args=None,
@@ -274,8 +299,8 @@ class Job(object):
 
     def setup_input_file_mirrors(self, hdfs_mirror_dir):
         """Attach a mirror HDFS location for each non-HDFS input file.
-        Also attaches a worker node location, incase the user wishes to copy
-        the HDFS input to worker node first before processing.
+        Also attaches a location for the worker node, incase the user wishes to
+        copy the input file from HDFS to worker node first before processing.
 
         Params:
         -------
