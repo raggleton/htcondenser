@@ -60,7 +60,7 @@ for i, word in enumerate(['Easter', 'NYE', 'Summer']):
                        word],
                  input_files=['simple_text.txt'],
                  output_files=['simple_results_%d.txt' % i],
-                 number=1)
+                 quantity=1)
 
 # Now submit jobs
 job_set.submit()

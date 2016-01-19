@@ -56,7 +56,7 @@ job_set = ht.JobSet(exe='./showsize',
 # Now add individual Jobs
 job = ht.Job(manager=job_set,
              name='job_exe',
-             number=1)
+             quantity=1)
 
 # Now submit jobs
 # job_set.write()

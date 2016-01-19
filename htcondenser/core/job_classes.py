@@ -193,7 +193,7 @@ class JobSet(object):
         for name, job in self.jobs.iteritems():
             template += '\n# %s\n' % name
             template += job.generate_job_arg_str()
-            template += '\nqueue %d\n' % job.number
+            template += '\nqueue %d\n' % job.quantity
 
         # Check we haven't left any unused tokens in the template.
         # If we have, then remove them.
@@ -249,7 +249,7 @@ class Job(object):
         If the path is on HDFS, then that will be the destination. Otherwise
         hdfs_store/job_name will be used as destination directory.
 
-    number : int
+    quantity : int
         Quantity of this Job to submit.
 
     Raises
@@ -265,7 +265,7 @@ class Job(object):
 
     def __init__(self, manager, name, args=None,
                  input_files=None, output_files=None,
-                 number=1):
+                 quantity=1):
         super(Job, self).__init__()
         self._manager = manager
         self.name = str(name)
@@ -278,7 +278,7 @@ class Job(object):
         if self.manager.setup_script:
             self.user_input_files.append(self.manager.setup_script)
         self.user_output_files = output_files or []
-        self.number = int(number)
+        self.quantity = int(quantity)
 
         if name in self.manager.jobs.keys():
             raise KeyError('Job with name %s already in this JobSet.' % name)
