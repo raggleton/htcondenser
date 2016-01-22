@@ -312,6 +312,9 @@ class Job(object):
         self.setup_input_file_mirrors(hdfs_mirror_dir=self.hdfs_mirror_dir)
         self.setup_output_file_mirrors(hdfs_mirror_dir=self.hdfs_mirror_dir)
 
+    def __eq__(self, other):
+        return self.name == other.name
+
     @property
     def manager(self):
         return self._manager
