@@ -179,7 +179,15 @@ class JobSet(object):
         -------
         str
             Completed job template.
+
+        Raises
+        ------
+        IndexError
+            If the JobSet has no Jobs attached.
         """
+
+        if len(self.jobs) == 0:
+            raise IndexError('You have not added any jobs to this JobSet.')
 
         # Make replacements in template
         replacement_dict = {
