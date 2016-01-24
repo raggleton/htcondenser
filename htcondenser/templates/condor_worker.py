@@ -83,7 +83,9 @@ def run_job(in_args=sys.argv[1:]):
         if os.path.isfile(os.path.basename(args.exe)):
             os.chmod(os.path.basename(args.exe), 0555)
 
-        run_cmd = args.exe + ' ' + ' '.join(args.args)
+        run_cmd = args.exe
+        if args.args:
+            run_cmd += ' ' + ' '.join(args.args)
         print setup_cmd + run_cmd
         check_call(setup_cmd + run_cmd, shell=True)
 

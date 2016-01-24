@@ -452,7 +452,8 @@ class Job(object):
         job_args.extend(['--exe', "'" + self.manager.exe + "'"])
 
         # Add arguments for exe
-        job_args.append('--args')
-        job_args.extend(new_args)
+        if new_args:
+            job_args.append('--args')
+            job_args.extend(new_args)
         job_args[-1] = job_args[-1] + '"'
         return ' '.join(job_args)
