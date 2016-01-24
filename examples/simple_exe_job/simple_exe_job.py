@@ -44,9 +44,8 @@ job_set = ht.JobSet(exe='./showsize',
                     hdfs_store=HDFS_STORE)
 
 # Now add individual Jobs
-job = ht.Job(manager=job_set,
-             name='job_exe',
-             quantity=1)
+job = ht.Job(name='job_exe')
+job_set.add_job(job)
 
 # Now submit jobs
 # job_set.write()

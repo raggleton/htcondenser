@@ -155,6 +155,31 @@ class JobSet(object):
             if f in bad_filenames:
                 raise OSError('Bad output filename')
 
+    def add_job(self, job):
+        """Add a Job to the collection of jobs managed by this JobSet.
+
+        Parameters
+        ----------
+        job: Job
+            Job object to be added.
+
+        Raises
+        ------
+        TypeError
+            If `job` argument isn't of type Job (or derived type).
+
+        KeyError
+            If a job with that name is already governed by this JobSet object.
+        """
+        if not isinstance(job, Job):
+            raise TypeError('Added job must by of type Job')
+
+        if job.name in self.jobs:
+            raise KeyError('Job %s already exists in JobSet', job.name)
+
+        self.jobs[job.name] = job
+        job.manager = self
+
     def write(self):
         """Write jobs to HTCondor job file."""
 
@@ -282,35 +307,21 @@ class Job(object):
         (or a derived class).
     """
 
-    def __init__(self, manager, name, args=None,
+    def __init__(self, name, args=None,
                  input_files=None, output_files=None,
                  quantity=1):
         super(Job, self).__init__()
-        self._manager = manager
+        self._manager = None
         self.name = str(name)
         self.args = args or []
         if isinstance(args, str):
             self.args = args.split()
         self.user_input_files = input_files or []
-        if self.manager.copy_exe:
-            self.user_input_files.append(self.manager.exe)
-        if self.manager.setup_script:
-            self.user_input_files.append(self.manager.setup_script)
         self.user_output_files = output_files or []
         self.quantity = int(quantity)
-
-        if name in self.manager.jobs.keys():
-            raise KeyError('Job with name %s already in this JobSet.' % name)
-        self.manager.jobs[self.name] = self
-
-        # Setup file mirroring on HDFS
+        # Hold settings for file mirroring on HDFS
         self.input_file_mirrors = []  # input original, mirror on HDFS, and worker
         self.output_file_mirrors = []  # output mirror on HDFS, and worker
-        self.hdfs_mirror_dir = os.path.join(self.manager.hdfs_store, self.name)
-        if not os.path.isdir(self.hdfs_mirror_dir):
-            os.makedirs(self.hdfs_mirror_dir)
-        self.setup_input_file_mirrors(hdfs_mirror_dir=self.hdfs_mirror_dir)
-        self.setup_output_file_mirrors(hdfs_mirror_dir=self.hdfs_mirror_dir)
 
     def __eq__(self, other):
         return self.name == other.name
@@ -321,10 +332,24 @@ class Job(object):
 
     @manager.setter
     def manager(self, manager):
-        if isinstance(manager, JobSet):
-            self._manager = manager
-        else:
+        """Set the manager for this Job.
+
+        Also triggers the setting of other info that depends on having a manager,
+        mainly setting up the file mirroring on HDFS for input and output files.
+        """
+        if not isinstance(manager, JobSet):
             raise TypeError('Incorrect object type set as Job manager - requires a JobSet object')
+        self._manager = manager
+        if manager.copy_exe:
+            self.user_input_files.append(manager.exe)
+        if manager.setup_script:
+            self.user_input_files.append(manager.setup_script)
+        # Setup mirroring in HDFS
+        self.hdfs_mirror_dir = os.path.join(self.manager.hdfs_store, self.name)
+        if not os.path.isdir(self.hdfs_mirror_dir):
+            os.makedirs(self.hdfs_mirror_dir)
+        self.setup_input_file_mirrors(self.hdfs_mirror_dir)
+        self.setup_output_file_mirrors(self.hdfs_mirror_dir)
 
     def setup_input_file_mirrors(self, hdfs_mirror_dir):
         """Attach a mirror HDFS location for each non-HDFS input file.

@@ -42,8 +42,7 @@ job_set = ht.JobSet(exe='./simple_worker_script.sh',
 # Here we are running our script multiple times, but passing it different
 # arguments, and telling it to produce different output files.
 for i, word in enumerate(['Easter', 'NYE', 'Summer']):
-    job = ht.Job(manager=job_set,
-                 name='job%d' % i,
+    job = ht.Job(name='job%d' % i,
                  args=['simple_text.txt',
                        'simple_results_%d.txt' % i,
                        'Christmas',
@@ -51,6 +50,7 @@ for i, word in enumerate(['Easter', 'NYE', 'Summer']):
                  input_files=['simple_text.txt'],
                  output_files=['simple_results_%d.txt' % i],
                  quantity=1)
+    job_set.add_job(job)
 
 # Now submit jobs
 job_set.submit()
