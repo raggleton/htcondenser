@@ -95,7 +95,7 @@ class JobSet(object):
         input files, in a subdirectory with the Job name. If this directory does
         not exist, it will be created.
 
-    other_kwargs: dict
+    other_args: dict
         Dictionary of other job options to write to HTCondor submit file.
         These will be added in **before** any arguments or jobs.
 
@@ -121,7 +121,7 @@ class JobSet(object):
                  transfer_hdfs_input=True,
                  transfer_input_files=None, transfer_output_files=None,
                  hdfs_store=None,
-                 **other_kwargs):
+                 other_args=None):
         super(JobSet, self).__init__()
         self.exe = exe
         self.copy_exe = copy_exe
@@ -141,7 +141,7 @@ class JobSet(object):
         self.transfer_output_files = transfer_output_files or []
         self.hdfs_store = hdfs_store
         self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
-        self.other_job_args = other_kwargs.values()[0]
+        self.other_job_args = other_args
 
         # Hold all Job object this JobSet governs, key is Job name.
         self.jobs = OrderedDict()
