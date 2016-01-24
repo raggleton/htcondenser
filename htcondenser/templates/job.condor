@@ -23,3 +23,6 @@ getenv = true
 
 # Need this to pass voms credentials
 use_x509userproxy = True
+
+# Custom user options
+{OTHER_ARGS}

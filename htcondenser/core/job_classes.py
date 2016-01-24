@@ -95,6 +95,9 @@ class JobSet(object):
         input files, in a subdirectory with the Job name. If this directory does
         not exist, it will be created.
 
+    other_kwargs: dict
+        Dictionary of other job options to write to HTCondor submit file.
+        These will be added in **before** any arguments or jobs.
 
     Raises
     ------
@@ -117,7 +120,8 @@ class JobSet(object):
                  cpus=1, memory='100MB', disk='100MB',
                  transfer_hdfs_input=True,
                  transfer_input_files=None, transfer_output_files=None,
-                 hdfs_store=None):
+                 hdfs_store=None,
+                 **other_kwargs):
         super(JobSet, self).__init__()
         self.exe = exe
         self.copy_exe = copy_exe
@@ -137,6 +141,7 @@ class JobSet(object):
         self.transfer_output_files = transfer_output_files or []
         self.hdfs_store = hdfs_store
         self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
+        self.other_job_args = other_kwargs.values()[0]
 
         # Hold all Job object this JobSet governs, key is Job name.
         self.jobs = OrderedDict()
@@ -188,6 +193,7 @@ class JobSet(object):
 
         job_contents = self.generate_job_contents(template)
 
+        log.info('Writing HTCondor job file to %s' % self.job_filename)
         with open(self.job_filename, 'w') as jfile:
             jfile.write(job_contents)
 
@@ -214,9 +220,18 @@ class JobSet(object):
         if len(self.jobs) == 0:
             raise IndexError('You have not added any jobs to this JobSet.')
 
+        worker_script = os.path.join(os.path.dirname(__file__),
+                                     '../templates/condor_worker.py')
+
+        if self.other_job_args:
+            other_args_str = '\n'.join('%s = %s' % (str(k), str(v))
+                                       for k, v in self.other_job_args.iteritems())
+        else:
+            other_args_str = None
+
         # Make replacements in template
         replacement_dict = {
-            'EXE_WRAPPER': os.path.join(os.path.dirname(__file__), '../templates/condor_worker.py'),
+            'EXE_WRAPPER': worker_script,
             'STDOUT': os.path.join(self.out_dir, self.out_file),
             'STDERR': os.path.join(self.err_dir, self.err_file),
             'STDLOG': os.path.join(self.log_dir, self.log_file),
@@ -225,10 +240,12 @@ class JobSet(object):
             'DISK': self.disk,
             'TRANSFER_INPUT_FILES': ','.join(self.transfer_input_files),
             'TRANSFER_OUTPUT_FILES': ','.join(self.transfer_input_files),
+            'OTHER_ARGS': other_args_str
         }
 
         for pattern, replacement in replacement_dict.iteritems():
-            template = template.replace("{%s}" % pattern, replacement)
+            if replacement:
+                template = template.replace("{%s}" % pattern, replacement)
 
         # Add jobs
         for name, job in self.jobs.iteritems():
@@ -251,7 +268,6 @@ class JobSet(object):
         """Write HTCondor job file, copy necessary files to HDFS, and submit.
         Also prints out info for user.
         """
-        log.info('Writing HTCondor job file to %s' % self.job_filename)
         self.write()
 
         for job in self.jobs.itervalues():
