@@ -248,7 +248,10 @@ class JobSet(object):
         return template
 
     def submit(self):
-        """Write HTCondor job file, copy necessary files to HDFS, and submit."""
+        """Write HTCondor job file, copy necessary files to HDFS, and submit.
+        Also prints out info for user.
+        """
+        log.info('Writing HTCondor job file to %s' % self.job_filename)
         self.write()
 
         for job in self.jobs.itervalues():
@@ -256,7 +259,16 @@ class JobSet(object):
 
         check_call(['condor_submit', self.job_filename])
 
+        if self.log_dir == self.out_dir == self.err_dir:
+            log.info('Output/error/htcondor logs written to %s' % self.out_dir)
+        else:
+            for t, d in {'STDOUT': self.out_dir,
+                         'STDERR': self.err_dir,
+                         'HTCondor log': self.log_dir}:
+                log.info('%s written to %s' % (t, d))
 
+
+# this should prob be a dict or namedtuple
 class FileMirror(object):
     """Simple class to store location of mirrored files: the original,
     the copy of HDFS, and the copy on the worker node."""
