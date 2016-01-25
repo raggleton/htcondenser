@@ -6,6 +6,7 @@ import logging
 import os
 from subprocess import check_call
 import shutil
+import datetime
 
 
 log = logging.getLogger(__name__)
@@ -74,3 +75,54 @@ def cp_hdfs(src, dest, force=True):
             shutil.copy2(src, dest)
         elif os.path.isdir(src):
             shutil.copytree(src, dest)
+
+
+def date_time_now(fmt='%H:%M:%S %d %B %Y'):
+    """Get current date and time as a string.
+
+    Parameters
+    ----------
+    fmt : str
+        Format string for time. Default is %H:%M:%S %d %B %Y. See strftime docs.
+
+    Returns
+    -------
+    str
+        Current time.
+    """
+    n = datetime.datetime.now()
+    return n.strftime(fmt)
+
+
+def date_now(fmt='%d %B %Y'):
+    """Get current date as a string.
+
+    Parameters
+    ----------
+    fmt : str
+        Format string for time. Default is %d %B %Y. See strftime docs.
+
+    Returns
+    -------
+    str
+        Current time.
+    """
+    n = datetime.datetime.now()
+    return n.strftime(fmt)
+
+
+def time_now(fmt="%H:%M:%S"):
+    """Get current time as a string.
+
+    Parameters
+    ----------
+    fmt : str
+        Format string for time. Default is %H:%M:%S. See strftime docs.
+
+    Returns
+    -------
+    str
+        Current time.
+    """
+    n = datetime.datetime.now()
+    return n.strftime(fmt)
