@@ -38,6 +38,14 @@ The aim of this library is to make submitting jobs to HTCondor a breeze. In part
 
 Each job is represented by a `Job` object. A group of `Job`s is governed by a `JobSet` object. All `Job`s in the group share common settings: they run the same executable, same setup commands, output to same log directory, and require the same resources. 1 `JobSet` = 1 HTCondor job description file. Individual `Job`s within a `JobSet` can have different arguments, and different input/output files.
 
+## Common pitfalls
+
+- `ERROR: proxy has expired`: you need to renew your Grid certificate: `voms-proxy-init -voms cms`. Or comment out the following from [`htcondenser/templates/job.condor`](htcondenser/templates/job.condor):
+
+```
+use_x509userproxy = True
+```
+
 ## But I want XYZ!
 
 Log an Issue, make a PR, or email me directly.
