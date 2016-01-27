@@ -2,7 +2,7 @@
 
 ## What is it?
 
-A simple library for submitting simple jobs (& DAGs in future) on the Bristol machines.
+A simple library for submitting simple jobs & DAGs on the Bristol machines.
 
 Designed to allow easy setting up of jobs and deployment on worker node, without the user worrying too much about writing custom scripts, or copying across files to HDFS.
 
@@ -38,6 +38,23 @@ The aim of this library is to make submitting jobs to HTCondor a breeze. In part
 
 Each job is represented by a `Job` object. A group of `Job`s is governed by a `JobSet` object. All `Job`s in the group share common settings: they run the same executable, same setup commands, output to same log directory, and require the same resources. 1 `JobSet` = 1 HTCondor job description file. Individual `Job`s within a `JobSet` can have different arguments, and different input/output files.
 
+For DAGs an additional class is utilised, `DAGMan`. Jobs must also be added to the `DAGMan` object, with optional arguments to specify which jobs must run as a prerequisite. This still retains the `Job`/`JobSet` structure as before for simpler jobs, to simplify the sharing of common parameters, and reduce the number of HTCondor submit files.
+
+###Aside: DAGs
+
+> DAG = **D**irected **A**cyclic **G**raph
+>
+> Essentially, a way of tying jobs together, with the requirement that some jobs can only run once their predecessors have run successfully.
+>
+> **Graph**: collection of nodes joined together by edges. Nodes represent jobs, and edges represent hierarchy. (Note, not the `y = sin(x)` type of graph.)
+>
+> **Directed**: edges between nodes have a *direction*. e.g. `A ->- B` means A precedes B, so B will only run once A has finished successfully.
+>
+> **Acyclic**: the graph cannot have cycles, e.g. `A ->- B ->- C ->- A`.
+>
+> For an example see the diamond DAG: [examples/dag_example/diamond.pdf](examples/dag_example/diamond.pdf).
+> There, jobB and jobC can only run once jobA has completed. Similarly, jobD can only run once jobB and jobC have completed.
+>
 ## Common pitfalls
 
 - `ERROR: proxy has expired`: you need to renew your Grid certificate: `voms-proxy-init -voms cms`. Or comment out the following from [`htcondenser/templates/job.condor`](htcondenser/templates/job.condor):
@@ -52,4 +69,4 @@ Log an Issue, make a PR, or email me directly.
 
 ## I want to help
 
-Take a look at [CONTRIBUTING.md](CONTRIBUTING.md).
+Take a look at [CONTRIBUTING](CONTRIBUTING.md).
