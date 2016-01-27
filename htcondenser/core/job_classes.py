@@ -8,7 +8,7 @@ import logging
 import os
 import re
 from subprocess import check_call
-from common import cp_hdfs
+from common import cp_hdfs, date_time_now
 from collections import OrderedDict
 
 
@@ -95,6 +95,11 @@ class JobSet(object):
         input files, in a subdirectory with the Job name. If this directory does
         not exist, it will be created.
 
+    dag_mode : bool
+        If False, writes all Jobs to submit file. If True, then the Jobs are
+        part of a DAG and the submit file for this JobSet only needs a
+        placeholder for jobs. Job arguments will be specified in the DAG file.
+
     other_args: dict
         Dictionary of other job options to write to HTCondor submit file.
         These will be added in **before** any arguments or jobs.
@@ -121,6 +126,7 @@ class JobSet(object):
                  transfer_hdfs_input=True,
                  transfer_input_files=None, transfer_output_files=None,
                  hdfs_store=None,
+                 dag_mode=False,
                  other_args=None):
         super(JobSet, self).__init__()
         self.exe = exe
@@ -140,6 +146,7 @@ class JobSet(object):
         self.transfer_input_files = transfer_input_files or []
         self.transfer_output_files = transfer_output_files or []
         self.hdfs_store = hdfs_store
+        self.dag_mode = dag_mode
         self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
         self.other_job_args = other_args
 
@@ -183,31 +190,39 @@ class JobSet(object):
             raise TypeError('Added job must by of type Job')
 
         if job.name in self.jobs:
-            raise KeyError('Job %s already exists in JobSet', job.name)
+            raise KeyError('Job %s already exists in JobSet' % job.name)
 
         self.jobs[job.name] = job
         job.manager = self
 
-    def write(self):
+    def write(self, dag_mode):
         """Write jobs to HTCondor job file."""
 
         with open(self.job_template) as tfile:
             template = tfile.read()
 
-        job_contents = self.generate_job_contents(template)
+        job_contents = self.generate_job_contents(template, dag_mode)
 
-        log.info('Writing HTCondor job file to %s' % self.job_filename)
-        with open(self.job_filename, 'w') as jfile:
+        log.info('Writing HTCondor job file to %s' % self.filename)
+        with open(self.filename, 'w') as jfile:
             jfile.write(job_contents)
 
-    def generate_job_contents(self, template):
+    def generate_job_contents(self, template, dag_mode=False):
         """Create a job file contents from a template, replacing necessary fields
         and adding in all jobs with necessary arguments.
+
+        Can either be used for normal jobs, in which case all jobs added, or
+        for use in a DAG, where a placeholder for any job(s) is used.
 
         Parameters
         ----------
         template : str
             Job template as a single string, including tokens to be replaced.
+
+        dag_mode : bool
+            If True, then submit file will only contain placeholder for job args.
+            This is so it can be used in a DAG. Otherwise, the submit file will
+            specify each Job attached to this JobSet.
 
         Returns
         -------
@@ -251,10 +266,16 @@ class JobSet(object):
                 template = template.replace("{%s}" % pattern, replacement)
 
         # Add jobs
-        for name, job in self.jobs.iteritems():
-            template += '\n# %s\n' % name
-            template += job.generate_job_arg_str()
-            template += '\nqueue %d\n' % job.quantity
+        if dag_mode:
+            # actual arguments are in the DAG file, only placeholders here
+            template += 'arguments=$(%s)\n' % DAGMan.JOB_VAR_NAME
+            template += 'queue\n'
+        else:
+            # specifiy each job in submit file
+            for name, job in self.jobs.iteritems():
+                template += '\n# %s\n' % name
+                template += 'arguments="%s"\n' % job.generate_job_arg_str()
+                template += '\nqueue %d\n' % job.quantity
 
         # Check we haven't left any unused tokens in the template.
         # If we have, then remove them.
@@ -271,7 +292,7 @@ class JobSet(object):
         """Write HTCondor job file, copy necessary files to HDFS, and submit.
         Also prints out info for user.
         """
-        self.write()
+        self.write(dag_mode=False)
 
         for job in self.jobs.itervalues():
             job.transfer_to_hdfs()
@@ -441,7 +462,7 @@ class Job(object):
             Argument string for the job, to be passed to condor_worker.py
 
         """
-        job_args = ['arguments="']
+        job_args = []
         if self.manager.setup_script:
             job_args.extend(['--setup', os.path.basename(self.manager.setup_script)])
 
@@ -475,11 +496,271 @@ class Job(object):
             job_args.extend(['--copyFromLocal', ofile.worker, ofile.hdfs])
 
         # Add the exe
-        job_args.extend(['--exe', "'" + self.manager.exe + "'"])
+        job_args.extend(['--exe', self.manager.exe])
 
         # Add arguments for exe
         if new_args:
             job_args.append('--args')
             job_args.extend(new_args)
-        job_args[-1] = job_args[-1] + '"'
+        job_args[-1] = job_args[-1]
         return ' '.join(job_args)
+
+
+class DAGMan(object):
+    """Class to implement DAG and manages Jobs and dependencies.
+
+    Parameters
+    ----------
+    filename : str
+
+    status_file : str
+
+    status_update_period : int or str
+
+    dot : str or None
+
+    """
+
+    # name of variable for indiviudal condor submit files
+    JOB_VAR_NAME = 'jobOpts'
+
+    def __init__(self,
+                 filename='jobs.dag',
+                 status_file='jobs.status',
+                 status_update_period=30,
+                 dot=None,
+                 other_args=None):
+        super(DAGMan, self).__init__()
+        self.dag_filename = filename
+        self.status_file = status_file
+        self.status_update_period = str(status_update_period)
+        self.dot = dot
+        self.other_args = other_args
+
+        # hold info about Jobs. key is name, value is a dict
+        self.jobs = OrderedDict()
+
+    def add_job(self, job, requires=None, job_vars=None, retry=None):
+        """Add a Job to the DAG.
+
+        Parameters
+        ----------
+        job : TYPE
+            Description
+        requires : TYPE, optional
+            Description
+        job_vars : TYPE, optional
+            Description
+        retry : int or str, optional
+            Description
+
+        Raises
+        ------
+        KeyError
+            Description
+        TypeError
+            Description
+        """
+        if job.name in self.jobs:
+            raise KeyError()
+
+        # Append necessary job arguments to any user opts.
+        job_vars = job_vars or ""
+        job_vars += 'jobOpts="%s"' % job.generate_job_arg_str()
+
+        self.jobs[job.name] = dict(job=job, job_vars=job_vars, retry=retry, requires=None)
+
+        hierarchy_list = []
+        # requires can be:
+        # - a job name [str]
+        # - a list/tuple/set of job names [list(str)]
+        # - a Job [Job]
+        # - a list/tuple/set of Jobs [list(Job)]
+        if requires:
+            if isinstance(requires, str):
+                hierarchy_list.append(requires)
+            elif isinstance(requires, Job):
+                hierarchy_list.append(requires.name)
+            elif hasattr(requires, '__getitem__'):  # maybe getattr better?
+                for it in requires:
+                    if isinstance(it, str):
+                        hierarchy_list.append(it)
+                    elif isinstance(it, Job):
+                        hierarchy_list.append(it.name)
+                    else:
+                        raise TypeError('Can only add list of Jobs or list of job names')
+            else:
+                raise TypeError('Can only add Job(s) or job name(s)')
+
+        # Keep list of names of Jobs that must be executed before this one.
+        self.jobs[job.name]['requires'] = hierarchy_list
+
+    def check_job_requirements(self, job):
+        """Check that the required Jobs actually exist and have been added to DAG.
+
+        Parameters
+        ----------
+        job : Job or str
+            Job object or name of Jobs to check.
+
+        Raises
+        ------
+        KeyError
+            If job(s) have prerequisite jobs that have not been added to the DAG.
+        TypeError
+            If `job` argument is not of type str or Job, or an iterable of
+            strings or Jobs.
+        """
+        job_name = ''
+        if isinstance(job, Job):
+            job_name = job.name
+        elif isinstance(job, str):
+            job_name = job
+        else:
+            log.debug(type(job))
+            raise TypeError('job argument must be job name or Job object.')
+        req_jobs = set(self.jobs[job_name]['requires'])
+        all_jobs = set(self.jobs)
+        if not req_jobs.issubset(all_jobs):
+            raise KeyError('The following requirements on %s do not have corresponding '
+                           'Job objects: %s' % (job_name, ', '.join(list(req_jobs - all_jobs))))
+
+    def generate_job_str(self, job):
+        """Generate a string for job, for use in DAG file.
+
+        Includes condor job file, any vars, and other options e.g. RETRY.
+        Job requirements (parents) are handled separately.
+
+        Parameters
+        ----------
+        job : Job or str
+            Job or job name.
+
+        Returns
+        -------
+        name : str
+            Job listing.
+
+        Raises
+        ------
+        TypeError
+            If `job` argument is not of type str or Job.
+        """
+        job_name = ''
+        if isinstance(job, Job):
+            job_name = job.name
+        elif isinstance(job, str):
+            job_name = job
+        else:
+            log.debug(type(job))
+            raise TypeError('job argument must be job name or Job object.')
+
+        job_obj = self.jobs[job_name]['job']
+        job_contents = ['JOB %s %s' % (job_name, job_obj.manager.filename)]
+
+        job_vars = self.jobs[job_name]['job_vars']
+        if job_vars:
+            job_contents.append('VARS %s %s' % (job_name, job_vars))
+
+        job_retry = self.jobs[job_name]['retry']
+        if job_retry:
+            job_contents.append('RETRY %s %s' % (job_name, job_retry))
+
+        return '\n'.join(job_contents)
+
+    def generate_job_requirements_str(self, job):
+        """Generate a string of prerequisite jobs for this job.
+
+        Does a check to make sure that the prerequisite Jobs do exist in the DAG.
+
+        Parameters
+        ----------
+        job : Job or str
+            Job object or name of job.
+
+        Returns
+        -------
+        str
+            Job requirements if prerequisite jobs. Otherwise blank string.
+
+        Raises
+        ------
+        TypeError
+            If `job` argument is not of type str or Job.
+        """
+        job_name = ''
+        if isinstance(job, Job):
+            job_name = job.name
+        elif isinstance(job, str):
+            job_name = job
+        else:
+            log.debug(type(job))
+            raise TypeError('job argument must be job name or Job object.')
+
+        self.check_job_requirements(job)
+
+        if self.jobs[job_name]['requires']:
+            return 'PARENT %s CHILD %s' % (' '.join(self.jobs[job_name]['requires']), job_name)
+        else:
+            return ''
+
+    def generate_dag_contents(self):
+        """
+        Generate DAG file contents as a string.
+
+        Returns
+        -------
+        str:
+            DAG file contents
+        """
+        # Hold each line as entry in this list, then finally join with \n
+        contents = ['# DAG created at %s' % date_time_now(), '']
+
+        # Add jobs
+        for name in self.jobs:
+            contents.append(self.generate_job_str(name))
+
+        # Add parent-child relationships
+        for name in self.jobs:
+            contents.append(self.generate_job_requirements_str(name))
+
+        # Add other options for DAG
+        if self.status_file:
+            contents.append('')
+            contents.append('NODE_STATUS_FILE %s %s' % (self.status_file, self.status_update_period))
+
+        if self.dot:
+            contents.append('')
+            contents.append('# Make a visual representation of this DAG (for PDF format):')
+            fmt = 'pdf'
+            output_file = os.path.splitext(self.dot)[0] + '.' + fmt
+            contents.append('# dot -T%s %s -o %s' % (fmt, self.dot, output_file))
+            contents.append('DOT %s' % self.dot)
+
+        if self.other_args:
+            contents.append('')
+            for k, v in self.other_args.iteritems():
+                contents.append('%s = %s' % (k, v))
+
+        contents.append('')
+        return '\n'.join(contents)
+
+    def write(self):
+        """Write DAG to file and causes all Jobs to write their HTCondor submit files."""
+
+        dag_contents = self.generate_dag_contents()
+        log.info('Writing DAG to %s' % self.dag_filename)
+        with open(self.dag_filename, 'w') as dfile:
+            dfile.write(dag_contents)
+
+        # Write job files for each JobSet
+        managers = set([jdict['job'].manager for jdict in self.jobs.values()])
+        for manager in managers:
+            manager.write(dag_mode=True)
+
+    def submit(self):
+        """Write all necessary submit files, transfer files to HDFS, and submit DAG."""
+        self.write()
+        for job in self.jobs.values():
+            job['job'].transfer_to_hdfs()
+        check_call(['condor_submit_dag', self.dag_filename])

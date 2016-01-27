@@ -1,1 +1,1 @@
-from job_classes import JobSet, Job
+from job_classes import JobSet, Job, DAGMan
