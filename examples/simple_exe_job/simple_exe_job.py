@@ -48,5 +48,4 @@ job = ht.Job(name='job_exe')
 job_set.add_job(job)
 
 # Now submit jobs
-# job_set.write()
 job_set.submit()
