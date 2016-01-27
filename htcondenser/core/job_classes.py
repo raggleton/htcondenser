@@ -17,7 +17,7 @@ log.setLevel(logging.INFO)
 
 
 class JobSet(object):
-    """Governs a set of Jobs, all sharing a common submission file, log
+    """Manages a set of Jobs, all sharing a common submission file, log
     locations, resource request, and setup procedure.
 
     Parameters
@@ -26,51 +26,51 @@ class JobSet(object):
         Name of executable for this set of jobs. Note that path must be specified,
         e.g. './myexe'
 
-    copy_exe : bool
+    copy_exe : bool, optional
         If `True`, copies the executable to HDFS. Set `False` for builtins e.g. awk
 
-    setup_script : str
+    setup_script : str, optional
         Shell script to execute on worker node to setup necessary programs, libs, etc.
 
-    filename : str
+    filename : str, optional
         Filename for HTCondor job description file.
 
-    out_dir : str
+    out_dir : str, optional
         Directory for STDOUT output. Will be automatically created if it does not
         already exist. Raises an OSError if already exists but is not a directory.
 
-    out_file : str
+    out_file : str, optional
         Filename for STDOUT output.
 
-    err_dir : str
+    err_dir : str, optional
         Directory for STDERR output. Will be automatically created if it does not
         already exist. Raises an OSError if already exists but is not a directory.
 
-    err_file : str
+    err_file : str, optional
         Filename for STDERR output.
 
-    log_dir : str
+    log_dir : str, optional
         Directory for log output. Will be automatically created if it does not
         already exist. Raises an OSError if already exists but is not a directory.
 
-    log_file : str
+    log_file : str, optional
         Filename for log output.
 
-    cpus : int
+    cpus : int, optional
         Number of CPU cores for each job.
 
-    memory : str
+    memory : str, optional
         RAM to request for each job.
 
-    disk : str
+    disk : str, optional
         Disk space to request for each job.
 
-    transfer_hdfs_input : bool
+    transfer_hdfs_input : bool, optional
         If True, transfers input files on HDFS to worker node first.
         Auto-updates program arguments to take this into account.
         Otherwise files are read directly from HDFS.
 
-    transfer_input_files : list[str]
+    transfer_input_files : list[str], optional
         List of files to be transferred across for each job
         (from initial_dir for relative paths).
         **Usage of this argument is highly discouraged**
@@ -79,7 +79,7 @@ class JobSet(object):
         processor load and network load.
         Recommended to use input_files argument in Job() instead.
 
-    transfer_output_files : list[str]
+    transfer_output_files : list[str], optional
         List of files to be transferred across after each job
         (to initial_dir for relative paths).
         **Usage of this argument is highly discouraged**
@@ -88,19 +88,19 @@ class JobSet(object):
         processor load and network load.
         Recommended to use output_files argument in Job() instead.
 
-    hdfs_store : str
+    hdfs_store : str, optional
         If any local files (on `/user`) needs to be transferred to the job, it
         must first be stored on `/hdfs`. This argument specifies the directory
         where those files are stored. Each job will have its own copy of all
         input files, in a subdirectory with the Job name. If this directory does
         not exist, it will be created.
 
-    dag_mode : bool
+    dag_mode : bool, optional
         If False, writes all Jobs to submit file. If True, then the Jobs are
         part of a DAG and the submit file for this JobSet only needs a
         placeholder for jobs. Job arguments will be specified in the DAG file.
 
-    other_args: dict
+    other_args: dict, optional
         Dictionary of other job options to write to HTCondor submit file.
         These will be added in **before** any arguments or jobs.
 
@@ -124,7 +124,8 @@ class JobSet(object):
                  log_dir='logs', log_file='$(cluster).$(process).log',
                  cpus=1, memory='100MB', disk='100MB',
                  transfer_hdfs_input=True,
-                 transfer_input_files=None, transfer_output_files=None,
+                 transfer_input_files=None,
+                 transfer_output_files=None,
                  hdfs_store=None,
                  dag_mode=False,
                  other_args=None):
@@ -150,13 +151,13 @@ class JobSet(object):
         self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
         self.other_job_args = other_args
 
-        # Hold all Job object this JobSet governs, key is Job name.
+        # Hold all Job object this JobSet manages, key is Job name.
         self.jobs = OrderedDict()
 
         # Setup directories
         # ---------------------------------------------------------------------
         for d in [self.out_dir, self.err_dir, self.log_dir, self.hdfs_store]:
-            if not os.path.isdir(d):
+            if d and not os.path.isdir(d):
                 log.info('Making directory %s', d)
                 os.makedirs(d)
 
@@ -219,7 +220,7 @@ class JobSet(object):
         template : str
             Job template as a single string, including tokens to be replaced.
 
-        dag_mode : bool
+        dag_mode : bool, optional
             If True, then submit file will only contain placeholder for job args.
             This is so it can be used in a DAG. Otherwise, the submit file will
             specify each Job attached to this JobSet.
@@ -332,23 +333,23 @@ class Job(object):
     name : str
         Name of this job. Must be unique in the managing JobSet.
 
-    args : list[str] or str
+    args : list[str] or str, optional
         Arguments for this job.
 
-    input_files : list[str]
+    input_files : list[str], optional
         List of input files to be transferred across before running executable.
         If the path is not on HDFS, a copy will be placed on HDFS under
         `hdfs_store`/`job.name`. Otherwise, the original on HDFS will be used.
 
-    output_files : list[str]
+    output_files : list[str], optional
         List of output files to be transferred across to HDFS after executable finishes.
         If the path is on HDFS, then that will be the destination. Otherwise
         `hdfs_store`/`job.name` will be used as destination directory.
 
-    quantity : int
+    quantity : int, optional
         Quantity of this Job to submit.
 
-    hdfs_mirror_dir : str
+    hdfs_mirror_dir : str, optional
         Mirror directory for files to be put on HDFS. If not specified, will
         use `hdfs_mirror_dir`/self.name, where `hdfs_mirror_dir` is taken
         from the manager. If the directory does not exist, it is created.
@@ -356,7 +357,7 @@ class Job(object):
     Raises
     ------
     KeyError
-        If the user tries to create a Job in a JobSet which already governs
+        If the user tries to create a Job in a JobSet which already manages
         a Job with that name.
 
     TypeError
@@ -507,18 +508,32 @@ class Job(object):
 
 
 class DAGMan(object):
-    """Class to implement DAG and manages Jobs and dependencies.
+    """Class to implement DAG, and manage Jobs and dependencies.
 
     Parameters
     ----------
     filename : str
+        Filename to write DAG jobs.
 
-    status_file : str
+    status_file : str, optional
+        Filename for DAG status file. See
+        https://research.cs.wisc.edu/htcondor/manual/current/2_10DAGMan_Applications.html#SECTION0031012000000000000000
 
-    status_update_period : int or str
+    status_update_period : int or str, optional
+        Refresh period for DAG status file in seconds.
 
-    dot : str or None
+    dot : str, optional
+        Filename for dot file. dot can then be used to generate a pictoral
+        representation of jobs in the DAG and their relationships.
 
+    other_args : dict, optional
+        Dictionary of {variable: value} for other DAG options.
+
+    Attributes
+    ----------
+    JOB_VAR_NAME : str
+        Name of variable to hold job arguments string to pass to condor_worker.py,
+        required in both DAG file and condor submit file.
     """
 
     # name of variable for indiviudal condor submit files
@@ -545,22 +560,35 @@ class DAGMan(object):
 
         Parameters
         ----------
-        job : TYPE
-            Description
-        requires : TYPE, optional
-            Description
-        job_vars : TYPE, optional
-            Description
+        job : Job
+            Job object to be added to DAG
+
+        requires : str, Job, iterable[str], iterable[Job], optional
+            Individual or a collection of Jobs or job names that must run first
+            before this job can run. i.e. the job(s) specified here are the
+            parents, whilst the added job is their child.
+
+        job_vars : str, optional
+            String of job variables specifically for the DAG. Note that program
+            arguments should be set in Job.args not here.
+
         retry : int or str, optional
-            Description
+            Number of retry attempts for this job. By default the job runs once,
+            and if its exit code != 0, the job has failed.
 
         Raises
         ------
         KeyError
-            Description
+            If a Job with that name has already been added to the DAG.
+
         TypeError
-            Description
+            If the `job` argument is not of type Job.
+            If `requires` argument is not of type str, Job, iterable(str)
+            or iterable(Job).
         """
+        if not isinstance(job, Job):
+            raise TypeError('Cannot added a non-Job object to DAGMan.')
+
         if job.name in self.jobs:
             raise KeyError()
 
@@ -601,12 +629,13 @@ class DAGMan(object):
         Parameters
         ----------
         job : Job or str
-            Job object or name of Jobs to check.
+            Job object or name of Job to check.
 
         Raises
         ------
         KeyError
             If job(s) have prerequisite jobs that have not been added to the DAG.
+
         TypeError
             If `job` argument is not of type str or Job, or an iterable of
             strings or Jobs.
@@ -629,7 +658,7 @@ class DAGMan(object):
         """Generate a string for job, for use in DAG file.
 
         Includes condor job file, any vars, and other options e.g. RETRY.
-        Job requirements (parents) are handled separately.
+        Job requirements (parents) are handled separately in another method.
 
         Parameters
         ----------
@@ -639,7 +668,7 @@ class DAGMan(object):
         Returns
         -------
         name : str
-            Job listing.
+            Job listing for DAG file.
 
         Raises
         ------
@@ -747,7 +776,6 @@ class DAGMan(object):
 
     def write(self):
         """Write DAG to file and causes all Jobs to write their HTCondor submit files."""
-
         dag_contents = self.generate_dag_contents()
         log.info('Writing DAG to %s' % self.dag_filename)
         with open(self.dag_filename, 'w') as dfile:

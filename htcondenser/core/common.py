@@ -45,7 +45,7 @@ def cp_hdfs(src, dest, force=True):
     dest : str
         Destination filepath. For files on HDFS, use the full filepath, /hdfs/...
 
-    force : bool
+    force : bool, optional
         If True, will overwrite destination file if it already exists.
     """
     # Check if source and/or destination reside on HDFS
@@ -82,13 +82,13 @@ def date_time_now(fmt='%H:%M:%S %d %B %Y'):
 
     Parameters
     ----------
-    fmt : str
+    fmt : str, optional
         Format string for time. Default is %H:%M:%S %d %B %Y. See strftime docs.
 
     Returns
     -------
     str
-        Current time.
+        Current date and time.
     """
     n = datetime.datetime.now()
     return n.strftime(fmt)
@@ -99,13 +99,13 @@ def date_now(fmt='%d %B %Y'):
 
     Parameters
     ----------
-    fmt : str
+    fmt : str, optional
         Format string for time. Default is %d %B %Y. See strftime docs.
 
     Returns
     -------
     str
-        Current time.
+        Current date.
     """
     n = datetime.datetime.now()
     return n.strftime(fmt)
@@ -116,7 +116,7 @@ def time_now(fmt="%H:%M:%S"):
 
     Parameters
     ----------
-    fmt : str
+    fmt : str, optional
         Format string for time. Default is %H:%M:%S. See strftime docs.
 
     Returns
