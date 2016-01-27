@@ -1,0 +1,13 @@
+digraph DAG {
+    label="DAGMan Job status at Wed Jan 27 16:53:51 2016";
+
+    "jobA" [shape=ellipse label="jobA (I)"];
+    "jobB" [shape=ellipse label="jobB (I)"];
+    "jobC" [shape=ellipse label="jobC (I)"];
+    "jobD" [shape=ellipse label="jobD (I)"];
+
+    "jobA" -> "jobB";
+    "jobA" -> "jobC";
+    "jobB" -> "jobD";
+    "jobC" -> "jobD";
+}
