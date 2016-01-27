@@ -54,7 +54,8 @@ For DAGs an additional class is utilised, `DAGMan`. Jobs must also be added to t
 >
 > For an example see the diamond DAG: [examples/dag_example/diamond.pdf](examples/dag_example/diamond.pdf).
 > There, jobB and jobC can only run once jobA has completed. Similarly, jobD can only run once jobB and jobC have completed.
->
+
+
 ## Common pitfalls
 
 - `ERROR: proxy has expired`: you need to renew your Grid certificate: `voms-proxy-init -voms cms`. Or comment out the following from [`htcondenser/templates/job.condor`](htcondenser/templates/job.condor):
