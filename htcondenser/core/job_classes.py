@@ -327,6 +327,11 @@ class Job(object):
     quantity : int
         Quantity of this Job to submit.
 
+    hdfs_mirror_dir : str
+        Mirror directory for files to be put on HDFS. If not specified, will
+        use `hdfs_mirror_dir`/self.name, where `hdfs_mirror_dir` is taken
+        from the manager. If the directory does not exist, it is created.
+
     Raises
     ------
     KeyError
@@ -340,7 +345,7 @@ class Job(object):
 
     def __init__(self, name, args=None,
                  input_files=None, output_files=None,
-                 quantity=1):
+                 quantity=1, hdfs_mirror_dir=None):
         super(Job, self).__init__()
         self._manager = None
         self.name = str(name)
@@ -353,6 +358,7 @@ class Job(object):
         # Hold settings for file mirroring on HDFS
         self.input_file_mirrors = []  # input original, mirror on HDFS, and worker
         self.output_file_mirrors = []  # output mirror on HDFS, and worker
+        self.hdfs_mirror_dir = hdfs_mirror_dir
 
     def __eq__(self, other):
         return self.name == other.name
@@ -376,7 +382,8 @@ class Job(object):
         if manager.setup_script:
             self.user_input_files.append(manager.setup_script)
         # Setup mirroring in HDFS
-        self.hdfs_mirror_dir = os.path.join(self.manager.hdfs_store, self.name)
+        if not self.hdfs_mirror_dir:
+            self.hdfs_mirror_dir = os.path.join(self.manager.hdfs_store, self.name)
         if not os.path.isdir(self.hdfs_mirror_dir):
             os.makedirs(self.hdfs_mirror_dir)
         self.setup_input_file_mirrors(self.hdfs_mirror_dir)
