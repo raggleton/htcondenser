@@ -28,6 +28,10 @@ Look in the `examples` directory. There are several directories, each designed t
 
 - [`simple_cmssw_job/simple_cmssw_job.py`](examples/simple_cmssw_job/simple_cmssw_job.py): setup a CMSSW environment and run `edmDumpEventContent` inside it.
 
+- [`dag_example/dag_example.py`](dag_example/dag_example.py): run a DAG (directed-acyclic-graph) - this allows you to schedule jobs that rely on other jobs to run first.
+
+If you want to run all examples, use [`examples/runAllExamples.sh`](examples/runAllExamples.sh).
+
 ## A bit more detail
 
 The aim of this library is to make submitting jobs to HTCondor a breeze. In particular, it is designed to make the setting up of libraries & programs, as well as transport of any input/output files, as simple as possible.
