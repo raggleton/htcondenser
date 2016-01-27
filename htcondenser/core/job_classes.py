@@ -126,7 +126,7 @@ class JobSet(object):
         self.exe = exe
         self.copy_exe = copy_exe
         self.setup_script = setup_script
-        self.job_filename = filename
+        self.filename = filename
         self.out_dir = os.path.abspath(str(out_dir))
         self.out_file = str(out_file)
         self.err_dir = os.path.abspath(str(err_dir))
@@ -159,6 +159,9 @@ class JobSet(object):
             bad_filenames = ['', '.']
             if f in bad_filenames:
                 raise OSError('Bad output filename')
+
+    def __eq__(self, other):
+        return self.filename == other.filename
 
     def add_job(self, job):
         """Add a Job to the collection of jobs managed by this JobSet.
@@ -273,7 +276,7 @@ class JobSet(object):
         for job in self.jobs.itervalues():
             job.transfer_to_hdfs()
 
-        check_call(['condor_submit', self.job_filename])
+        check_call(['condor_submit', self.filename])
 
         if self.log_dir == self.out_dir == self.err_dir:
             log.info('Output/error/htcondor logs written to %s' % self.out_dir)
