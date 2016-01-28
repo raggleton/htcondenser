@@ -1,7 +1,7 @@
 """Functions that are commonly used."""
 
 
-import logging_config
+import htcondenser.core.logging_config
 import logging
 import os
 from subprocess import check_call

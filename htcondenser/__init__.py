@@ -1,2 +1,4 @@
+"""A simple library for submitting jobs on the DICE system at Bristol."""
+
 # flake8: noqa
-from core import *
+from htcondenser.core import *

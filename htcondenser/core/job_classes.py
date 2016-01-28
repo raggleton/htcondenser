@@ -3,12 +3,12 @@ Classes to describe jobs, groups of jobs, and other helper classes.
 """
 
 
-import logging_config
+import htcondenser.core.logging_config
 import logging
 import os
 import re
 from subprocess import check_call
-from common import cp_hdfs, date_time_now
+from htcondenser.core.common import cp_hdfs, date_time_now
 from collections import OrderedDict
 
 

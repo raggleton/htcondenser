@@ -1,1 +1,1 @@
-from job_classes import JobSet, Job, DAGMan
+from htcondenser.core.job_classes import JobSet, Job, DAGMan
