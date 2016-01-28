@@ -376,8 +376,8 @@ class Job(object):
         self.args = args or []
         if isinstance(args, str):
             self.args = args.split()
-        self.user_input_files = input_files or []
-        self.user_output_files = output_files or []
+        self.input_files = input_files or []
+        self.output_files = output_files or []
         self.quantity = int(quantity)
         # Hold settings for file mirroring on HDFS
         self.input_file_mirrors = []  # input original, mirror on HDFS, and worker
@@ -403,9 +403,9 @@ class Job(object):
             raise TypeError('Incorrect object type set as Job manager - requires a JobSet object')
         self._manager = manager
         if manager.copy_exe:
-            self.user_input_files.append(manager.exe)
+            self.input_files.append(manager.exe)
         if manager.setup_script:
-            self.user_input_files.append(manager.setup_script)
+            self.input_files.append(manager.setup_script)
         # Setup mirroring in HDFS
         if not self.hdfs_mirror_dir:
             self.hdfs_mirror_dir = os.path.join(self.manager.hdfs_store, self.name)
@@ -424,7 +424,7 @@ class Job(object):
         hdfs_mirror_dir : str
             Location of directory to store mirrored copies.
         """
-        for ifile in self.user_input_files:
+        for ifile in self.input_files:
             basename = os.path.basename(ifile)
             hdfs_mirror = (ifile if ifile.startswith('/hdfs')
                            else os.path.join(hdfs_mirror_dir, basename))
@@ -439,7 +439,7 @@ class Job(object):
         hdfs_mirror_dir : str
             Location of directory to store mirrored copies.
         """
-        for ofile in self.user_output_files:
+        for ofile in self.output_files:
             basename = os.path.basename(ofile)
             hdfs_mirror = (ofile if ofile.startswith('/hdfs')
                            else os.path.join(hdfs_mirror_dir, basename))
