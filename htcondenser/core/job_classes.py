@@ -204,7 +204,7 @@ class JobSet(object):
 
         job_contents = self.generate_job_contents(template, dag_mode)
 
-        log.info('Writing HTCondor job file to %s' % self.filename)
+        log.info('Writing HTCondor job file to %s', self.filename)
         with open(self.filename, 'w') as jfile:
             jfile.write(job_contents)
 
@@ -284,7 +284,7 @@ class JobSet(object):
         if leftover_tokens:
             log.debug('Leftover tokens in job file:')
         for tok in leftover_tokens:
-            log.debug('%s' % tok)
+            log.debug('%s', tok)
             template = template.replace(tok, '')
 
         return template
@@ -301,12 +301,12 @@ class JobSet(object):
         check_call(['condor_submit', self.filename])
 
         if self.log_dir == self.out_dir == self.err_dir:
-            log.info('Output/error/htcondor logs written to %s' % self.out_dir)
+            log.info('Output/error/htcondor logs written to %s', self.out_dir)
         else:
             for t, d in {'STDOUT': self.out_dir,
                          'STDERR': self.err_dir,
                          'HTCondor log': self.log_dir}:
-                log.info('%s written to %s' % (t, d))
+                log.info('%s written to %s', t, d)
 
 
 # this should prob be a dict or namedtuple
@@ -387,6 +387,7 @@ class Job(object):
 
     @property
     def manager(self):
+        """Returns the Job's managing JobSet."""
         return self._manager
 
     @manager.setter
@@ -777,7 +778,7 @@ class DAGMan(object):
     def write(self):
         """Write DAG to file and causes all Jobs to write their HTCondor submit files."""
         dag_contents = self.generate_dag_contents()
-        log.info('Writing DAG to %s' % self.dag_filename)
+        log.info('Writing DAG to %s', self.dag_filename)
         with open(self.dag_filename, 'w') as dfile:
             dfile.write(dag_contents)
 

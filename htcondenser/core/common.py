@@ -26,8 +26,6 @@ def check_dir_create(directory):
         If 'directory' already exists but is a file.
     """
     if not os.path.isdir(directory):
-        # if os.path.isfile(directory):
-        #     log.error('%s exists but is a file' % directory)
         os.makedirs(directory)
 
 
@@ -90,8 +88,7 @@ def date_time_now(fmt='%H:%M:%S %d %B %Y'):
     str
         Current date and time.
     """
-    n = datetime.datetime.now()
-    return n.strftime(fmt)
+    return datetime.datetime.now().strftime(fmt)
 
 
 def date_now(fmt='%d %B %Y'):
@@ -107,8 +104,7 @@ def date_now(fmt='%d %B %Y'):
     str
         Current date.
     """
-    n = datetime.datetime.now()
-    return n.strftime(fmt)
+    return datetime.datetime.now().strftime(fmt)
 
 
 def time_now(fmt="%H:%M:%S"):
@@ -124,5 +120,4 @@ def time_now(fmt="%H:%M:%S"):
     str
         Current time.
     """
-    n = datetime.datetime.now()
-    return n.strftime(fmt)
+    return datetime.datetime.now().strftime(fmt)

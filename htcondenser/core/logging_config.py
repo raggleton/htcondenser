@@ -29,11 +29,11 @@ class LevelFormatter(logging.Formatter, object):
 
     """
 
-    def __init__(self, fmt=None, datefmt=None, level_fmts={}):
-        self._level_formatters = {}
-        for level, format in level_fmts.items():
+    def __init__(self, fmt=None, datefmt=None, level_fmts=None):
+        self._level_formatters = {} or level_fmts
+        for level, lfmt in level_fmts.items():
             # Could optionally support level names too
-            self._level_formatters[level] = logging.Formatter(fmt=format, datefmt=datefmt)
+            self._level_formatters[level] = logging.Formatter(fmt=lfmt, datefmt=datefmt)
         # self._fmt will be the default format
         super(LevelFormatter, self).__init__(fmt=fmt, datefmt=datefmt)
 
