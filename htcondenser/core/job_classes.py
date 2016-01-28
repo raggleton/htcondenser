@@ -69,6 +69,8 @@ class JobSet(object):
         If True, transfers input files on HDFS to worker node first.
         Auto-updates program arguments to take this into account.
         Otherwise files are read directly from HDFS.
+        Note that this does not affect input files **not** on HDFS - they will
+        be transferred across regardlass.
 
     transfer_input_files : list[str], optional
         List of files to be transferred across for each job
@@ -481,10 +483,15 @@ class Job(object):
                 job_args.extend(['--copyToLocal', ifile.hdfs, ifile.worker])
         else:
             # Replace input files in exe args with their HDFS node copies
-            for i, arg in enumerate(new_args):
-                for ifile in self.input_file_mirrors:
+            for ifile in self.input_file_mirrors:
+                for i, arg in enumerate(new_args):
                     if arg == ifile.original:
                         new_args[i] = ifile.hdfs
+                # Add input files to be transferred across,
+                # but only if they originally aren't on hdfs
+                if not ifile.original.startswith('/hdfs'):
+                    job_args.extend(['--copyToLocal', ifile.hdfs, ifile.worker])
+
 
         log.debug("New job args:")
         log.debug(new_args)
