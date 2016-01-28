@@ -327,11 +327,6 @@ class Job(object):
 
     Parameters
     ----------
-    manager : JobSet
-        JobSet object that will be responsible for this Job. The Job will
-        inherit settings from the manager, such as executable, log directories,
-        resource request, and setup procedure.
-
     name : str
         Name of this job. Must be unique in the managing JobSet.
 
@@ -507,11 +502,13 @@ class Job(object):
         # Add the exe
         job_args.extend(['--exe', self.manager.exe])
 
-        # Add arguments for exe
+        # Add arguments for exe MUST COME LAST AS GREEDY
         if new_args:
             job_args.append('--args')
             job_args.extend(new_args)
-        job_args[-1] = job_args[-1]
+
+        # Convert everything to str
+        job_args = [str(x) for x in job_args]
         return ' '.join(job_args)
 
 
@@ -759,7 +756,9 @@ class DAGMan(object):
 
         # Add parent-child relationships
         for name in self.jobs:
-            contents.append(self.generate_job_requirements_str(name))
+            req_str = self.generate_job_requirements_str(name)
+            if req_str != '':
+                contents.append(req_str)
 
         # Add other options for DAG
         if self.status_file:
