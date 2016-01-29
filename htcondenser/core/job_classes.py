@@ -146,8 +146,14 @@ class JobSet(object):
         self.memory = str(memory)
         self.disk = str(disk)
         self.transfer_hdfs_input = transfer_hdfs_input
-        self.transfer_input_files = transfer_input_files or []
-        self.transfer_output_files = transfer_output_files or []
+        # can't use X[:] or [] idiom as [:] evaulated first (so breaks on None)
+        if not transfer_output_files:
+            transfer_input_files = []
+        # need a copy, not a reference.
+        self.transfer_input_files = transfer_input_files[:]
+        if not transfer_output_files:
+            transfer_output_files = []
+        self.transfer_output_files = transfer_output_files[:]
         self.hdfs_store = hdfs_store
         self.dag_mode = dag_mode
         self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
@@ -368,11 +374,15 @@ class Job(object):
         super(Job, self).__init__()
         self._manager = None
         self.name = str(name)
-        self.args = args or []
+        self.args = args[:] or []
         if isinstance(args, str):
             self.args = args.split()
-        self.input_files = input_files or []
-        self.output_files = output_files or []
+        if not input_files:
+            input_files = []
+        self.input_files = input_files[:]
+        if not output_files:
+            output_files = []
+        self.output_files = output_files[:]
         self.quantity = int(quantity)
         # Hold settings for file mirroring on HDFS
         self.input_file_mirrors = []  # input original, mirror on HDFS, and worker
