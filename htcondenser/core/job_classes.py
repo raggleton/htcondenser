@@ -455,7 +455,7 @@ class Job(object):
         """Transfer files across to HDFS."""
         for ifile in self.input_file_mirrors:
             if ifile.original != ifile.hdfs:
-                log.info('Copying %s to %s', ifile.original, ifile.hdfs)
+                log.info('Copying %s -->> %s', ifile.original, ifile.hdfs)
                 cp_hdfs(ifile.original, ifile.hdfs)
 
     def generate_job_arg_str(self):
@@ -809,3 +809,5 @@ class DAGMan(object):
         for job in self.jobs.values():
             job['job'].transfer_to_hdfs()
         check_call(['condor_submit_dag', self.dag_filename])
+        log.info('Check DAG status:')
+        log.info('DAGstatus.py %s', self.filename)

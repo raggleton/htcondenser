@@ -8,6 +8,8 @@ Designed to allow easy setting up of jobs and deployment on worker node, without
 
 Note that this probably won't work for more custom or complicated workflows, but may be a useful starting point.
 
+It also includes a nifty tool to check on the progress of DAGs, [`DAGstatus.py`](htcondenser/exe/DAGstatus.py).
+
 ## What do I need?
 
 An area on `/hdfs/users` that you have read/write permission. Python >= 2.6 (default on soolin), but untested with Python 3.
@@ -16,7 +18,7 @@ For building the docs, you'll need [sphinx](http://www.sphinx-doc.org/en/stable/
 
 ## How do I get/install it?
 
-For now, run `setup.sh`. This will just add the current directory to `PYTHONPATH`. This required every time you login (or add to `~/.bashrc`/`~/.bash_profile`). Needs a better way (pip...).
+For now, run `source setup.sh`. This will just add the current directory to `PYTHONPATH`. This required every time you login (or add to `~/.bashrc`/`~/.bash_profile`). Needs a better way (pip...).
 
 ## How do I get started?
 
@@ -40,10 +42,8 @@ Each job is represented by a `Job` object. A group of `Job`s is governed by a `J
 
 For DAGs an additional class is utilised, `DAGMan`. Jobs must also be added to the `DAGMan` object, with optional arguments to specify which jobs must run as a prerequisite. This still retains the `Job`/`JobSet` structure as before for simpler jobs, to simplify the sharing of common parameters, and reduce the number of HTCondor submit files.
 
-###Aside: DAGs
+###Aside: DAGs (**D**irected **A**cyclic **G**raphs)
 
-> DAG = **D**irected **A**cyclic **G**raph
->
 > Essentially, a way of tying jobs together, with the requirement that some jobs can only run once their predecessors have run successfully.
 >
 > **Graph**: collection of nodes joined together by edges. Nodes represent jobs, and edges represent hierarchy. (Note, not the `y = sin(x)` type of graph.)
