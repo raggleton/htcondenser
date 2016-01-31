@@ -39,7 +39,7 @@ class WorkerArgParser(argparse.ArgumentParser):
 
 def run_job(in_args=sys.argv[1:]):
     """Main function to run commands on worker node."""
-
+    print '>>>> condor_worker.py logging:'
     parser = WorkerArgParser(description=__doc__)
     args = parser.parse_args(in_args)
     print 'Args:'
@@ -84,6 +84,9 @@ def run_job(in_args=sys.argv[1:]):
             os.chmod(os.path.basename(args.exe), 0555)
 
         run_cmd = args.exe
+        # If it's a local file, we need to do ./ for some reason...
+        if os.path.isfile(os.path.basename(args.exe)):
+            run_cmd = './' + os.path.basename(args.exe)
         if args.args:
             run_cmd += ' ' + ' '.join(args.args)
         print setup_cmd + run_cmd
