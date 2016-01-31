@@ -503,18 +503,20 @@ class Job(object):
         Will not trasnfer exe or setup script if manager.share_exe_setup is True.
         That is left for the manager to do.
         """
-        if len(self.input_file_mirrors) > 0 and not os.path.isdir(self.hdfs_mirror_dir):
+        # skip the exe.setup script - the JobSet should handle this itself.
+        files_to_transfer = []
+        for ifile in self.input_file_mirrors:
+            if ((ifile.original == ifile.hdfs) or (self.manager.share_exe_setup and
+                    ifile.original in [self.manager.exe, self.manager.setup_script])):
+                continue
+            files_to_transfer.append(ifile)
+
+        if len(files_to_transfer) > 0 and not os.path.isdir(self.hdfs_mirror_dir):
             os.makedirs(self.hdfs_mirror_dir)
 
-        for ifile in self.input_file_mirrors:
-            # skip the exe.setup script - the JobSet should handle this itself.
-            if (self.manager.share_exe_setup and
-                    ifile.original in [self.manager.exe, self.manager.setup_script]):
-                continue
-
-            if ifile.original != ifile.hdfs:
-                log.info('Copying %s -->> %s', ifile.original, ifile.hdfs)
-                cp_hdfs(ifile.original, ifile.hdfs)
+        for ifile in files_to_transfer:
+            log.info('Copying %s -->> %s', ifile.original, ifile.hdfs)
+            cp_hdfs(ifile.original, ifile.hdfs)
 
     def generate_job_arg_str(self):
         """Generate arg string to pass to the condor_worker.py script.
