@@ -72,6 +72,11 @@ class JobSet(object):
         Note that this does not affect input files **not** on HDFS - they will
         be transferred across regardlass.
 
+    share_exe_setup: bool, optional
+        If True, then all jobs will use the same exe and setup files on HDFS.
+        If False, each job will have their own copy of the exe and setup script
+        in their individual job folder.
+
     transfer_input_files : list[str], optional
         List of files to be transferred across for each job
         (from initial_dir for relative paths).
@@ -126,6 +131,7 @@ class JobSet(object):
                  log_dir='logs', log_file='$(cluster).$(process).log',
                  cpus=1, memory='100MB', disk='100MB',
                  transfer_hdfs_input=True,
+                 share_exe_setup=False,
                  transfer_input_files=None,
                  transfer_output_files=None,
                  hdfs_store=None,
@@ -146,6 +152,7 @@ class JobSet(object):
         self.memory = str(memory)
         self.disk = str(disk)
         self.transfer_hdfs_input = transfer_hdfs_input
+        self.share_exe_setup = share_exe_setup
         # can't use X[:] or [] idiom as [:] evaulated first (so breaks on None)
         if not transfer_output_files:
             transfer_input_files = []
@@ -443,8 +450,7 @@ class Job(object):
         # Setup mirroring in HDFS
         if not self.hdfs_mirror_dir:
             self.hdfs_mirror_dir = os.path.join(self.manager.hdfs_store, self.name)
-        if not os.path.isdir(self.hdfs_mirror_dir):
-            os.makedirs(self.hdfs_mirror_dir)
+            log.debug('Auto setting mirror dir %s', self.hdfs_mirror_dir)
         self.setup_input_file_mirrors(self.hdfs_mirror_dir)
         self.setup_output_file_mirrors(self.hdfs_mirror_dir)
 
@@ -453,6 +459,10 @@ class Job(object):
         Also attaches a location for the worker node, incase the user wishes to
         copy the input file from HDFS to worker node first before processing.
 
+        Will correctly account for managing JobSet's preference for share_exe_setup.
+        Since input_file_mirrors is used for generate_job_arg_str(), we need to add
+        the exe/setup here, even though they don't get transferred by the Job itself.
+
         Parameters
         ----------
         hdfs_mirror_dir : str
@@ -460,8 +470,12 @@ class Job(object):
         """
         for ifile in self.input_files:
             basename = os.path.basename(ifile)
+            mirror_dir = hdfs_mirror_dir
+            if (ifile in [self.manager.exe, self.manager.setup_script] and
+                    self.manager.share_exe_setup):
+                mirror_dir = self.manager.hdfs_store
             hdfs_mirror = (ifile if ifile.startswith('/hdfs')
-                           else os.path.join(hdfs_mirror_dir, basename))
+                           else os.path.join(mirror_dir, basename))
             mirror = FileMirror(original=ifile, hdfs=hdfs_mirror, worker=basename)
             self.input_file_mirrors.append(mirror)
 
@@ -481,8 +495,23 @@ class Job(object):
             self.output_file_mirrors.append(mirror)
 
     def transfer_to_hdfs(self):
-        """Transfer files across to HDFS."""
+        """Transfer files across to HDFS.
+
+        Auto-creates HDFS mirror dir if it doesn't exist, but only if
+        there are 1 or more files to transfer.
+
+        Will not trasnfer exe or setup script if manager.share_exe_setup is True.
+        That is left for the manager to do.
+        """
+        if len(self.input_file_mirrors) > 0 and not os.path.isdir(self.hdfs_mirror_dir):
+            os.makedirs(self.hdfs_mirror_dir)
+
         for ifile in self.input_file_mirrors:
+            # skip the exe.setup script - the JobSet should handle this itself.
+            if (self.manager.share_exe_setup and
+                    ifile.original in [self.manager.exe, self.manager.setup_script]):
+                continue
+
             if ifile.original != ifile.hdfs:
                 log.info('Copying %s -->> %s', ifile.original, ifile.hdfs)
                 cp_hdfs(ifile.original, ifile.hdfs)
@@ -538,7 +567,7 @@ class Job(object):
             job_args.extend(['--copyFromLocal', ofile.worker, ofile.hdfs])
 
         # Add the exe
-        job_args.extend(['--exe', self.manager.exe])
+        job_args.extend(['--exe', os.path.basename(self.manager.exe)])
 
         # Add arguments for exe MUST COME LAST AS GREEDY
         if new_args:
@@ -579,7 +608,7 @@ class DAGMan(object):
         required in both DAG file and condor submit file.
     """
 
-    # name of variable for indiviudal condor submit files
+    # name of variable for individual condor submit files
     JOB_VAR_NAME = 'jobOpts'
 
     def __init__(self,
