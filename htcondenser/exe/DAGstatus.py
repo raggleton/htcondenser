@@ -2,6 +2,13 @@
 """
 Code to interpret a DAGman status output, and present it in a more user-friendly manner.
 
+First run `source setup.sh` to add to PATH.
+Then run by doing:
+
+```
+DAGstatus.py [status file [... status file]]
+```
+
 TODO:
 - maybe use namedtuples instead of full-blown classes?
 """
@@ -82,6 +89,7 @@ class DagStatus(ClassAd):
                  job_procs_held,
                  job_procs_idle,
                  node_statuses=None):
+        super(ClassAd, self).__init__()
         self.timestamp = timestamp
         self.dag_status = strip_doublequotes(dag_status)
         self.nodes_total = int(nodes_total)
@@ -102,8 +110,8 @@ class DagStatus(ClassAd):
     @property
     def job_procs_running(self):
         return len([n for n in self.node_statuses
-                    if n.node_status == "STATUS_SUBMITTED"
-                    and n.status_details == "not_idle"])
+                    if n.node_status == "STATUS_SUBMITTED" and
+                    n.status_details == "not_idle"])
 
     @property
     def nodes_running_percent(self):
@@ -119,6 +127,7 @@ class NodeStatus(ClassAd):
                  retry_count,
                  job_procs_queued,
                  job_procs_held):
+        super(NodeStatus, self).__init__()
         self.node = strip_doublequotes(node)
         self.node_status = strip_doublequotes(node_status)
         self.status_details = status_details.replace('"', '')
@@ -132,6 +141,7 @@ class StatusEnd(ClassAd):
     def __init__(self,
                  end_time,
                  next_update):
+        super(StatusEnd, self).__init__()
         self.end_time = strip_doublequotes(end_time)
         self.next_update = strip_doublequotes(next_update)
 
