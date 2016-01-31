@@ -327,6 +327,14 @@ class FileMirror(object):
         self.hdfs = hdfs
         self.worker = worker
 
+    def __repr__(self):
+        arg_str = ', '.join(['%s=%s' % (k, v) for k, v in self.__dict__.iteritems()])
+        return 'FileMirror(%s)' % (arg_str)
+
+    def __str__(self):
+        arg_str = ', '.join(['%s=%s' % (k, v) for k, v in self.__dict__.iteritems()])
+        return 'FileMirror(%s)' % arg_str
+
 
 class Job(object):
     """One job instance in a JobSet, with defined arguments and inputs/outputs.
