@@ -297,14 +297,33 @@ class JobSet(object):
 
         return template
 
+    def transfer_to_hdfs(self):
+        """Copy any necessary input files to HDFS.
+
+        This transfers both common exe/setup (if self.share_exe_setup == True),
+        and the individual files required by each Job.
+        """
+        # Do copying of exe/setup script here instead of through Jobs if only
+        # 1 instance required on HDFS.
+        if self.share_exe_setup:
+            if self.copy_exe:
+                log.info('Copying %s -->> %s', self.exe, self.hdfs_store)
+                cp_hdfs(self.exe, self.hdfs_store)
+            if self.setup_script:
+                log.info('Copying %s -->> %s', self.setup_script, self.hdfs_store)
+                cp_hdfs(self.setup_script, self.hdfs_store)
+
+        # Get each job to transfer their necessary files
+        for job in self.jobs.itervalues():
+            job.transfer_to_hdfs()
+
     def submit(self):
         """Write HTCondor job file, copy necessary files to HDFS, and submit.
         Also prints out info for user.
         """
         self.write(dag_mode=False)
 
-        for job in self.jobs.itervalues():
-            job.transfer_to_hdfs()
+        self.transfer_to_hdfs()
 
         check_call(['condor_submit', self.filename])
 
@@ -506,7 +525,6 @@ class Job(object):
                 # but only if they originally aren't on hdfs
                 if not ifile.original.startswith('/hdfs'):
                     job_args.extend(['--copyToLocal', ifile.hdfs, ifile.worker])
-
 
         log.debug("New job args:")
         log.debug(new_args)
@@ -801,6 +819,16 @@ class DAGMan(object):
         contents.append('')
         return '\n'.join(contents)
 
+    def get_managers(self):
+        """Get a list of all unique JobSets managing Jobs in this DAG.
+
+        Returns
+        -------
+        name : list
+            List of unique JobSet objects.
+        """
+        return list(set([jdict['job'].manager for jdict in self.jobs.itervalues()]))
+
     def write(self):
         """Write DAG to file and causes all Jobs to write their HTCondor submit files."""
         dag_contents = self.generate_dag_contents()
@@ -809,15 +837,14 @@ class DAGMan(object):
             dfile.write(dag_contents)
 
         # Write job files for each JobSet
-        managers = set([jdict['job'].manager for jdict in self.jobs.values()])
-        for manager in managers:
+        for manager in self.get_managers():
             manager.write(dag_mode=True)
 
     def submit(self):
         """Write all necessary submit files, transfer files to HDFS, and submit DAG."""
         self.write()
-        for job in self.jobs.values():
-            job['job'].transfer_to_hdfs()
+        for manager in self.get_managers():
+            manager.transfer_to_hdfs()
         check_call(['condor_submit_dag', self.dag_filename])
         log.info('Check DAG status:')
-        log.info('DAGstatus.py %s', self.filename)
+        log.info('DAGstatus.py %s', self.status_file)
