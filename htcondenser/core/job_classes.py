@@ -382,7 +382,9 @@ class Job(object):
         super(Job, self).__init__()
         self._manager = None
         self.name = str(name)
-        self.args = args[:] or []
+        if not args:
+            args = []
+        self.args = args[:]
         if isinstance(args, str):
             self.args = args.split()
         if not input_files:
