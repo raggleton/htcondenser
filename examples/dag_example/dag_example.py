@@ -53,5 +53,10 @@ dag_man.add_job(jobB, requires=[jobA])
 dag_man.add_job(jobC, requires=[jobA])
 dag_man.add_job(jobD, requires=[jobB, jobC])
 
+# Can easily iterate over jobs in a DAGMan
+print 'My JobSet has', len(dag_man), 'jobs:'
+for job in dag_man:
+    print job.name, 'running:', job.manager.exe, ' '.join(job.args)
+
 # dag_man.write()
 dag_man.submit()

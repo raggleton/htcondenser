@@ -186,6 +186,14 @@ class JobSet(object):
     def __eq__(self, other):
         return self.filename == other.filename
 
+    def __getitem__(self, i):
+        if i >= len(self):
+            raise IndexError()
+        return self.jobs[self.jobs.keys()[i]]
+
+    def __len__(self):
+        return len(self.jobs)
+
     def add_job(self, job):
         """Add a Job to the collection of jobs managed by this JobSet.
 
@@ -368,7 +376,7 @@ class Job(object):
     Parameters
     ----------
     name : str
-        Name of this job. Must be unique in the managing JobSet.
+        Name of this job. Must be unique in the managing JobSet, and DAGMan.
 
     args : list[str] or str, optional
         Arguments for this job.
@@ -628,6 +636,14 @@ class DAGMan(object):
 
         # hold info about Jobs. key is name, value is a dict
         self.jobs = OrderedDict()
+
+    def __getitem__(self, i):
+        if i >= len(self):
+            raise IndexError()
+        return self.jobs[self.jobs.keys()[i]]['job']
+
+    def __len__(self):
+        return len(self.jobs)
 
     def add_job(self, job, requires=None, job_vars=None, retry=None):
         """Add a Job to the DAG.

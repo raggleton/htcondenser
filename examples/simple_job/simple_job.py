@@ -52,5 +52,10 @@ for i, word in enumerate(['Easter', 'NYE', 'Summer']):
                  quantity=1)
     job_set.add_job(job)
 
+# Can easily iterate over jobs in a JobSet
+print 'My JobSet has', len(job_set), 'jobs:'
+for job in job_set:
+    print job.name, 'running:', job_set.exe, ' '.join(job.args)
+
 # Now submit jobs
 job_set.submit()
