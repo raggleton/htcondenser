@@ -755,6 +755,37 @@ class DAGMan(object):
             raise KeyError('The following requirements on %s do not have corresponding '
                            'Job objects: %s' % (job_name, ', '.join(list(req_jobs - all_jobs))))
 
+    def check_dag_acyclic(self, job):
+        """Check no circular requirements, e.g. A ->- B ->- A
+
+        Get all requirements for all parent jobs recursively, and check for
+        the presence of this job in that list.
+
+        Parameters
+        ----------
+        job : Job or str
+            Job or job name to check
+
+        Raises
+        ------
+        RuntimeError
+            If job has circular dependency.
+        """
+        job_name = job.name if isinstance(job, Job) else job
+        parents = self.jobs[job_name]['requires']
+        log.debug('Checking %s', job_name)
+        log.debug(parents)
+        while parents:
+            new_parents = []
+            for p in parents:
+                grandparents = self.jobs[p]['requires']
+                if job_name in grandparents:
+                    raise RuntimeError("%s is in requirements for %s - cannot "
+                                       "have cyclic dependencies" % (job_name, p))
+                new_parents.extend(grandparents)
+                parents = new_parents[:]
+        return True
+
     def generate_job_str(self, job):
         """Generate a string for job, for use in DAG file.
 
@@ -801,7 +832,8 @@ class DAGMan(object):
     def generate_job_requirements_str(self, job):
         """Generate a string of prerequisite jobs for this job.
 
-        Does a check to make sure that the prerequisite Jobs do exist in the DAG.
+        Does a check to make sure that the prerequisite Jobs do exist in the DAG,
+        and that DAG is acyclic.
 
         Parameters
         ----------
@@ -828,6 +860,7 @@ class DAGMan(object):
             raise TypeError('job argument must be job name or Job object.')
 
         self.check_job_requirements(job)
+        self.check_dag_acyclic(job)
 
         if self.jobs[job_name]['requires']:
             return 'PARENT %s CHILD %s' % (' '.join(self.jobs[job_name]['requires']), job_name)
