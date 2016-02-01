@@ -187,9 +187,14 @@ class JobSet(object):
         return self.filename == other.filename
 
     def __getitem__(self, i):
-        if i >= len(self):
-            raise IndexError()
-        return self.jobs[self.jobs.keys()[i]]
+        if isinstance(i, int):
+            if i >= len(self):
+                raise IndexError()
+            return self.jobs.values()[i]
+        elif isinstance(i, slice):
+            return self.jobs.values()[i]
+        else:
+            raise TypeError('Invalid argument type - must be int or slice')
 
     def __len__(self):
         return len(self.jobs)
@@ -638,9 +643,15 @@ class DAGMan(object):
         self.jobs = OrderedDict()
 
     def __getitem__(self, i):
-        if i >= len(self):
-            raise IndexError()
-        return self.jobs[self.jobs.keys()[i]]['job']
+        if isinstance(i, int):
+            if i >= len(self):
+                raise IndexError()
+            return self.jobs.values()[i]
+        elif isinstance(i, slice):
+            return self.jobs.values()[i]
+        else:
+            raise TypeError('Invalid argument type - must be int or slice')
+
 
     def __len__(self):
         return len(self.jobs)
