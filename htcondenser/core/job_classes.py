@@ -646,9 +646,9 @@ class DAGMan(object):
         if isinstance(i, int):
             if i >= len(self):
                 raise IndexError()
-            return self.jobs.values()[i]
+            return self.jobs.values()[i]['job']
         elif isinstance(i, slice):
-            return self.jobs.values()[i]
+            return [x['job'] for x in self.jobs.values()[i]]
         else:
             raise TypeError('Invalid argument type - must be int or slice')
 
