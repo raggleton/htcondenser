@@ -311,6 +311,7 @@ class JobSet(object):
 
         # Update other_job_args if certificate
         if self.certificate:
+            check_certificate()
             if not self.other_job_args:
                 self.other_job_args = dict()
             self.other_job_args['use_x509userproxy'] = 'True'
