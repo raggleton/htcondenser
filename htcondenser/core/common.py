@@ -1,15 +1,33 @@
-"""Functions that are commonly used."""
+"""Functions/classes that are commonly used."""
 
 
 import htcondenser.core.logging_config
 import logging
 import os
-from subprocess import check_call
+from subprocess import check_call, Popen, PIPE
 import shutil
 import datetime
 
 
 log = logging.getLogger(__name__)
+
+
+class FileMirror(object):
+    """Simple class to store location of mirrored files: the original,
+    the copy of HDFS, and the copy on the worker node."""
+    def __init__(self, original, hdfs, worker):
+        super(FileMirror, self).__init__()
+        self.original = original
+        self.hdfs = hdfs
+        self.worker = worker
+
+    def __repr__(self):
+        arg_str = ', '.join(['%s=%s' % (k, v) for k, v in self.__dict__.iteritems()])
+        return 'FileMirror(%s)' % (arg_str)
+
+    def __str__(self):
+        arg_str = ', '.join(['%s=%s' % (k, v) for k, v in self.__dict__.iteritems()])
+        return 'FileMirror(%s)' % arg_str
 
 
 def check_dir_create(directory):
@@ -121,3 +139,25 @@ def time_now(fmt="%H:%M:%S"):
         Current time.
     """
     return datetime.datetime.now().strftime(fmt)
+
+
+def check_certificate():
+    """Check the user's grid certificate is valid, and > 1 hour time left.
+
+    Raises
+    ------
+    RuntimeError
+        If certificate not valid.
+        If certificate valid but has < 1 hour remaining.
+    """
+    # use Popen and not check_output as doesn't exist in py2.6
+    proc = Popen(['voms-proxy-info'], stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+    if err == '':
+        parts = [line.split(':', 1) for line in out.split('\n') if line]
+        voms_dict = dict((x[0].strip(), x[1].strip()) for x in parts)
+        if int(voms_dict['timeleft'].split(":")[0]) < 1:
+            raise RuntimeError('Your certificate has less than 1 hour remaining, '
+                               'please renew using `voms-proxy-init -voms cms --valid 168`')
+    else:
+        raise RuntimeError(err)
