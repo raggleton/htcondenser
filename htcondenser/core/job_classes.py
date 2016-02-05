@@ -755,7 +755,7 @@ class DAGMan(object):
             raise KeyError('The following requirements on %s do not have corresponding '
                            'Job objects: %s' % (job_name, ', '.join(list(req_jobs - all_jobs))))
 
-    def check_dag_acyclic(self, job):
+    def check_job_acyclic(self, job):
         """Check no circular requirements, e.g. A ->- B ->- A
 
         Get all requirements for all parent jobs recursively, and check for
@@ -860,7 +860,7 @@ class DAGMan(object):
             raise TypeError('job argument must be job name or Job object.')
 
         self.check_job_requirements(job)
-        self.check_dag_acyclic(job)
+        self.check_job_acyclic(job)
 
         if self.jobs[job_name]['requires']:
             return 'PARENT %s CHILD %s' % (' '.join(self.jobs[job_name]['requires']), job_name)
