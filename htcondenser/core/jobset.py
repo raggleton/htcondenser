@@ -186,10 +186,17 @@ class JobSet(object):
         # ---------------------------------------------------------------------
         if self.certificate:
             check_certificate()
-            if self.other_job_args:
-                self.other_job_args['use_x509userproxy'] = 'True'
-            else:
-                self.other_job_args = dict(use_x509userproxy='True')
+            if not self.other_job_args:
+                self.other_job_args = dict()
+            self.other_job_args['use_x509userproxy'] = 'True'
+
+        # Add in permissions lines for DAG mode
+        # ---------------------------------------------------------------------
+        if self.dag_mode:
+            if not self.other_job_args:
+                self.other_job_args = dict()
+            self.other_job_args['accounting_group'] = 'group_physics.hep'
+            self.other_job_args['account_group_user'] = '$ENV(LOGNAME)'
 
         # Hold all Job object this JobSet manages, key is Job name.
         self.jobs = OrderedDict()
