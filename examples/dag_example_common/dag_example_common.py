@@ -26,7 +26,8 @@ job_set = ht.JobSet(exe='./runScript.sh',
                     share_exe_setup=True,
                     common_input_files=['example.txt'],
                     transfer_hdfs_input=False,
-                    hdfs_store=HDFS_STORE)
+                    hdfs_store=HDFS_STORE,
+                    dag_mode=True)
 jobA = ht.Job(name='jobA', args='A')
 jobB = ht.Job(name='jobB', args='B')
 jobC = ht.Job(name='jobC', args='C')
