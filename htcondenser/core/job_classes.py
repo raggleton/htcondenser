@@ -7,7 +7,7 @@ import htcondenser.core.logging_config
 import logging
 import os
 import re
-from subprocess import check_call
+from subprocess import check_call, Popen, PIPE
 from htcondenser.core.common import cp_hdfs, date_time_now
 from collections import OrderedDict
 from itertools import chain
@@ -65,6 +65,9 @@ class JobSet(object):
 
     disk : str, optional
         Disk space to request for each job.
+
+    certificate : bool, optional
+        Whether the JobSet requires the user's grid certificate.
 
     transfer_hdfs_input : bool, optional
         If True, transfers input files on HDFS to worker node first.
@@ -136,6 +139,7 @@ class JobSet(object):
                  err_dir='logs', err_file='$(cluster).$(process).err',
                  log_dir='logs', log_file='$(cluster).$(process).log',
                  cpus=1, memory='100MB', disk='100MB',
+                 certificate=False,
                  transfer_hdfs_input=True,
                  share_exe_setup=False,
                  common_input_files=None,
@@ -158,6 +162,7 @@ class JobSet(object):
         self.cpus = int(cpus) if int(cpus) >= 1 else 1
         self.memory = str(memory)
         self.disk = str(disk)
+        self.certificate = certificate
         self.transfer_hdfs_input = transfer_hdfs_input
         self.share_exe_setup = share_exe_setup
         # can't use X[:] or [] idiom as [:] evaulated first (so breaks on None)
@@ -176,6 +181,15 @@ class JobSet(object):
         self.dag_mode = dag_mode
         self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
         self.other_job_args = other_args
+
+        # Add certificate requirement to other_job_args if necessary
+        # ---------------------------------------------------------------------
+        if self.certificate:
+            self.check_certificate()
+            if self.other_job_args:
+                self.other_job_args['use_x509userproxy'] = 'True'
+            else:
+                self.other_job_args = dict(use_x509userproxy='True')
 
         # Hold all Job object this JobSet manages, key is Job name.
         self.jobs = OrderedDict()
@@ -213,6 +227,27 @@ class JobSet(object):
 
     def __len__(self):
         return len(self.jobs)
+
+    def check_certificate(self):
+        """Check the user's grid certificate is valid, and > 1 hour time left.
+
+        Raises
+        ------
+        RuntimeError
+            If certificate not valid.
+            If certificate valid but has < 1 hour remaining.
+        """
+        # use Popen and not check_output as doesn't exist in py2.6
+        proc = Popen(['voms-proxy-info'], stdout=PIPE, stderr=PIPE)
+        out, err = proc.communicate()
+        if err == '':
+            parts = [line.split(':', 1) for line in out.split('\n') if line]
+            voms_dict = dict((x[0].strip(), x[1].strip()) for x in parts)
+            if int(voms_dict['timeleft'].split(":")[0]) < 1:
+                raise RuntimeError('Your certificate has less than 1 hour remaining, '
+                                   'please renew using `voms-proxy-init -voms cms --valid 168`')
+        else:
+            raise RuntimeError(err)
 
     def setup_common_input_file_mirrors(self, hdfs_mirror_dir):
         """Attach a mirror HDFS location for each non-HDFS input file.

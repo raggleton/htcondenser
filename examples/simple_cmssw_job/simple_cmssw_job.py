@@ -10,6 +10,8 @@ executing commands.
 
 Then edmDumpEventContent is called as a simple example.
 
+You must have a valid grid certificate, check with voms-proxy-info
+
 Note that before running you MUST specify a location on HDFS to store
 input/output files (HDFS_STORE), otherwise it will not be able to transfer them.
 This way, local files on /user will be automatically put on HDFS.
@@ -38,6 +40,7 @@ job_set = ht.JobSet(exe='edmDumpEventContent',
                     err_dir=LOG_STORE, err_file=log_stem + '.err',
                     log_dir=LOG_STORE, log_file=log_stem + '.log',
                     cpus=1, memory='50MB', disk='1',
+                    certificate=True,  # !!! important for passing Grid certificate to jobs
                     hdfs_store=HDFS_STORE)
 
 # Now add a Job

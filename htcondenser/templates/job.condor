@@ -18,11 +18,8 @@ request_cpus = {CPUS}
 accounting_group = group_physics.hep
 account_group_user = $ENV(LOGNAME)
 
-# use the ENV that is provided
+# use the user's ENV
 getenv = true
-
-# Need this to pass voms credentials
-use_x509userproxy = True
 
 # Custom user options
 {OTHER_ARGS}
