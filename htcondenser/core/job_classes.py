@@ -230,13 +230,13 @@ class JobSet(object):
         with open(self.job_template) as tfile:
             template = tfile.read()
 
-        job_contents = self.generate_job_contents(template, dag_mode)
+        file_contents = self.generate_file_contents(template, dag_mode)
 
         log.info('Writing HTCondor job file to %s', self.filename)
         with open(self.filename, 'w') as jfile:
-            jfile.write(job_contents)
+            jfile.write(file_contents)
 
-    def generate_job_contents(self, template, dag_mode=False):
+    def generate_file_contents(self, template, dag_mode=False):
         """Create a job file contents from a template, replacing necessary fields
         and adding in all jobs with necessary arguments.
 
