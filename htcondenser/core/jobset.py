@@ -111,11 +111,6 @@ class JobSet(object):
         input files, in a subdirectory with the Job name. If this directory does
         not exist, it will be created.
 
-    dag_mode : bool, optional
-        If False, writes all Jobs to submit file. If True, then the Jobs are
-        part of a DAG and the submit file for this JobSet only needs a
-        placeholder for jobs. Job arguments will be specified in the DAG file.
-
     other_args: dict, optional
         Dictionary of other job options to write to HTCondor submit file.
         These will be added in **before** any arguments or jobs.
@@ -178,26 +173,9 @@ class JobSet(object):
             transfer_output_files = []
         self.transfer_output_files = transfer_output_files[:]
         self.hdfs_store = hdfs_store
-        self.dag_mode = dag_mode
+        # self.dag_mode = dag_mode
         self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
         self.other_job_args = other_args
-
-        # Add certificate requirement to other_job_args if necessary
-        # ---------------------------------------------------------------------
-        if self.certificate:
-            check_certificate()
-            if not self.other_job_args:
-                self.other_job_args = dict()
-            self.other_job_args['use_x509userproxy'] = 'True'
-
-        # Add in permissions lines for DAG mode
-        # ---------------------------------------------------------------------
-        if self.dag_mode:
-            if not self.other_job_args:
-                self.other_job_args = dict()
-            self.other_job_args['accounting_group'] = 'group_physics.hep'
-            self.other_job_args['account_group_user'] = '$ENV(LOGNAME)'
-
         # Hold all Job object this JobSet manages, key is Job name.
         self.jobs = OrderedDict()
 
@@ -323,6 +301,19 @@ class JobSet(object):
 
         worker_script = os.path.join(os.path.dirname(__file__),
                                      '../templates/condor_worker.py')
+
+        # Update other_job_args if dag
+        if dag_mode:
+            if not self.other_job_args:
+                self.other_job_args = dict()
+            self.other_job_args['accounting_group'] = 'group_physics.hep'
+            self.other_job_args['account_group_user'] = '$ENV(LOGNAME)'
+
+        # Update other_job_args if certificate
+        if self.certificate:
+            if not self.other_job_args:
+                self.other_job_args = dict()
+            self.other_job_args['use_x509userproxy'] = 'True'
 
         if self.other_job_args:
             other_args_str = '\n'.join('%s = %s' % (str(k), str(v))

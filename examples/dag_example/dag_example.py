@@ -24,8 +24,7 @@ job_set1 = ht.JobSet(exe='./script1.sh',
                      out_dir=LOG_STORE, out_file=log_stem1 + '.out',
                      err_dir=LOG_STORE, err_file=log_stem1 + '.err',
                      log_dir=LOG_STORE, log_file=log_stem1 + '.log',
-                     hdfs_store=HDFS_STORE,
-                     dag_mode=True)
+                     hdfs_store=HDFS_STORE)
 jobA = ht.Job(name='jobA', args='A')
 jobD = ht.Job(name='jobD', args='D')
 
@@ -38,8 +37,7 @@ job_set2 = ht.JobSet(exe='./script2.sh',
                      out_dir=LOG_STORE, out_file=log_stem2 + '.out',
                      err_dir=LOG_STORE, err_file=log_stem2 + '.err',
                      log_dir=LOG_STORE, log_file=log_stem2 + '.log',
-                     hdfs_store=HDFS_STORE,
-                     dag_mode=True)
+                     hdfs_store=HDFS_STORE)
 jobB = ht.Job(name='jobB', args='B')
 jobC = ht.Job(name='jobC', args='C')
 
