@@ -342,7 +342,6 @@ class JobSet(object):
         Also prints out info for user.
         """
         self.write(dag_mode=False)
-
         self.transfer_to_hdfs()
 
         check_call(['condor_submit', self.filename])
@@ -513,7 +512,7 @@ class Job(object):
         Auto-creates HDFS mirror dir if it doesn't exist, but only if
         there are 1 or more files to transfer.
 
-        Will not trasnfer exe or setup script if manager.share_exe_setup is True.
+        Will not transfer exe or setup script if manager.share_exe_setup is True.
         That is left for the manager to do.
         """
         # skip the exe.setup script - the JobSet should handle this itself.
@@ -651,7 +650,6 @@ class DAGMan(object):
             return [x['job'] for x in self.jobs.values()[i]]
         else:
             raise TypeError('Invalid argument type - must be int or slice')
-
 
     def __len__(self):
         return len(self.jobs)
@@ -910,7 +908,7 @@ class DAGMan(object):
         contents.append('')
         return '\n'.join(contents)
 
-    def get_managers(self):
+    def get_jobsets(self):
         """Get a list of all unique JobSets managing Jobs in this DAG.
 
         Returns
@@ -928,13 +926,13 @@ class DAGMan(object):
             dfile.write(dag_contents)
 
         # Write job files for each JobSet
-        for manager in self.get_managers():
+        for manager in self.get_jobsets():
             manager.write(dag_mode=True)
 
     def submit(self):
         """Write all necessary submit files, transfer files to HDFS, and submit DAG."""
         self.write()
-        for manager in self.get_managers():
+        for manager in self.get_jobsets():
             manager.transfer_to_hdfs()
         check_call(['condor_submit_dag', self.dag_filename])
         log.info('Check DAG status:')
