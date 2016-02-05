@@ -271,7 +271,8 @@ def print_table(dag_status, node_statuses, status_end, summary):
     job_dict["Retries"] = "retry_count"
     job_dict["Detail"] = "status_details"
     # Auto-size each column - find maximum of column header and column contents
-    job_col_widths = [max([len(str(getattr(x, v))) for x in node_statuses] + [len(k)]) for k, v in job_dict.iteritems()]
+    job_col_widths = [max([len(str(getattr(x, v))) for x in node_statuses] + [len(k)])
+                      for k, v in job_dict.iteritems()]
     # make formatter string to be used for each row, auto calculates number of columns
     # note that the %d are required for python 2.6, which doesn't allow just {}
     job_format_parts = ["{%d:<%d}" % (i, l) for i, l in zip(range(len(job_dict.keys())), job_col_widths)]
@@ -289,7 +290,8 @@ def print_table(dag_status, node_statuses, status_end, summary):
     summary_dict["Failed"] = "nodes_failed"
     summary_dict["Done"] = "nodes_done"
     summary_dict["Done %"] = "nodes_done_percent"
-    summary_col_widths = [max(len(str(getattr(dag_status, v))), len(k)) for k, v in summary_dict.iteritems()]
+    summary_col_widths = [max(len(str(getattr(dag_status, v))), len(k))
+                          for k, v in summary_dict.iteritems()]
     summary_format_parts = ["{%d:<%d}" % (i, l) for i, l in zip(range(len(summary_dict.keys())), summary_col_widths)]
     summary_format = "  |  ".join(summary_format_parts)
     summary_header = summary_format.format(*summary_dict.keys())
@@ -332,9 +334,15 @@ def print_table(dag_status, node_statuses, status_end, summary):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-v", "--verbose", help="enable debugging mesages", action='store_true')
-    parser.add_argument("-s", "--summary", help="only printout very short summary of all jobs", action='store_true')
-    parser.add_argument("statusFile", help="name(s) of DAG status file(s), separated by spaces", nargs="*")
+    parser.add_argument("-v", "--verbose",
+                        help="enable debugging mesages",
+                        action='store_true')
+    parser.add_argument("-s", "--summary",
+                        help="only printout very short summary of all jobs",
+                        action='store_true')
+    parser.add_argument("statusFile",
+                        help="name(s) of DAG status file(s), separated by spaces",
+                        nargs="*")
     args = parser.parse_args()
     if args.verbose:
         log.setLevel(logging.DEBUG)
