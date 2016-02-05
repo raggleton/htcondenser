@@ -10,6 +10,7 @@ import re
 from subprocess import check_call
 from htcondenser.core.common import cp_hdfs, date_time_now
 from collections import OrderedDict
+from itertools import chain
 
 
 log = logging.getLogger(__name__)
@@ -72,10 +73,15 @@ class JobSet(object):
         Note that this does not affect input files **not** on HDFS - they will
         be transferred across regardlass.
 
-    share_exe_setup: bool, optional
+    share_exe_setup : bool, optional
         If True, then all jobs will use the same exe and setup files on HDFS.
         If False, each job will have their own copy of the exe and setup script
         in their individual job folder.
+
+    common_input_files : list[str], optional
+        List of common input files for each job. Unlike Job input files, there
+        will only be 1 copy of this input file made on HDFS. Not sure if this
+        will break anything...
 
     transfer_input_files : list[str], optional
         List of files to be transferred across for each job
@@ -132,6 +138,7 @@ class JobSet(object):
                  cpus=1, memory='100MB', disk='100MB',
                  transfer_hdfs_input=True,
                  share_exe_setup=False,
+                 common_input_files=None,
                  transfer_input_files=None,
                  transfer_output_files=None,
                  hdfs_store=None,
@@ -154,6 +161,10 @@ class JobSet(object):
         self.transfer_hdfs_input = transfer_hdfs_input
         self.share_exe_setup = share_exe_setup
         # can't use X[:] or [] idiom as [:] evaulated first (so breaks on None)
+        if not common_input_files:
+            common_input_files = []
+        self.common_input_files = common_input_files[:]
+        self.common_input_file_mirrors = []  # To hold FileMirror obj
         if not transfer_output_files:
             transfer_input_files = []
         # need a copy, not a reference.
@@ -183,6 +194,10 @@ class JobSet(object):
             if f in bad_filenames:
                 raise OSError('Bad output filename')
 
+        # Setup mirrors for any common input files
+        # ---------------------------------------------------------------------
+        self.setup_common_input_file_mirrors(self.hdfs_store)
+
     def __eq__(self, other):
         return self.filename == other.filename
 
@@ -198,6 +213,24 @@ class JobSet(object):
 
     def __len__(self):
         return len(self.jobs)
+
+    def setup_common_input_file_mirrors(self, hdfs_mirror_dir):
+        """Attach a mirror HDFS location for each non-HDFS input file.
+        Also attaches a location for the worker node, incase the user wishes to
+        copy the input file from HDFS to worker node first before processing.
+
+        Parameters
+        ----------
+        hdfs_mirror_dir : str
+            Location of directory to store mirrored copies.
+        """
+        for ifile in self.common_input_files:
+            basename = os.path.basename(ifile)
+            mirror_dir = hdfs_mirror_dir
+            hdfs_mirror = (ifile if ifile.startswith('/hdfs')
+                           else os.path.join(mirror_dir, basename))
+            mirror = FileMirror(original=ifile, hdfs=hdfs_mirror, worker=basename)
+            self.common_input_file_mirrors.append(mirror)
 
     def add_job(self, job):
         """Add a Job to the collection of jobs managed by this JobSet.
@@ -332,6 +365,11 @@ class JobSet(object):
             if self.setup_script:
                 log.info('Copying %s -->> %s', self.setup_script, self.hdfs_store)
                 cp_hdfs(self.setup_script, self.hdfs_store)
+
+        # Transfer common input files
+        for ifile in self.common_input_file_mirrors:
+            log.info('Copying %s -->> %s', ifile.original, ifile.hdfs)
+            cp_hdfs(ifile.original, ifile.hdfs)
 
         # Get each job to transfer their necessary files
         for job in self.jobs.itervalues():
@@ -535,7 +573,8 @@ class Job(object):
 
         This includes the user's args (in `self.args`), but also includes options
         for input and output files, and automatically updating the args to
-        account for new locations on HDFS or worker node.
+        account for new locations on HDFS or worker node. It also includes
+        common input files from managing JobSet.
 
         Returns
         -------
@@ -551,7 +590,7 @@ class Job(object):
 
         if self.manager.transfer_hdfs_input:
             # Replace input files in exe args with their worker node copies
-            for ifile in self.input_file_mirrors:
+            for ifile in chain(self.input_file_mirrors, self.manager.common_input_file_mirrors):
                 for i, arg in enumerate(new_args):
                     if arg == ifile.original:
                         new_args[i] = ifile.worker
@@ -560,7 +599,7 @@ class Job(object):
                 job_args.extend(['--copyToLocal', ifile.hdfs, ifile.worker])
         else:
             # Replace input files in exe args with their HDFS node copies
-            for ifile in self.input_file_mirrors:
+            for ifile in chain(self.input_file_mirrors, self.manager.common_input_file_mirrors):
                 for i, arg in enumerate(new_args):
                     if arg == ifile.original:
                         new_args[i] = ifile.hdfs
