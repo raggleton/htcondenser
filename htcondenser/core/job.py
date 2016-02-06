@@ -144,7 +144,7 @@ class Job(object):
             basename = os.path.basename(ofile)
             hdfs_mirror = (ofile if ofile.startswith('/hdfs')
                            else os.path.join(hdfs_mirror_dir, basename))
-            mirror = ht.FileMirror(original=ofile, hdfs=hdfs_mirror, worker=basename)
+            mirror = ht.FileMirror(original=ofile, hdfs=hdfs_mirror, worker=ofile)
             self.output_file_mirrors.append(mirror)
 
     def transfer_to_hdfs(self):
