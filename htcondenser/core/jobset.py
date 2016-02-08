@@ -265,7 +265,7 @@ class JobSet(object):
         file_contents = self.generate_file_contents(template, dag_mode)
 
         log.info('Writing HTCondor job file to %s', self.filename)
-        check_dir_create(os.path.dirname(self.filename))
+        check_dir_create(os.path.dirname(os.path.abspath(self.filename)))
         with open(self.filename, 'w') as jfile:
             jfile.write(file_contents)
 
