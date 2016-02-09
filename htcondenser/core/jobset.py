@@ -148,11 +148,11 @@ class JobSet(object):
         self.copy_exe = copy_exe
         self.setup_script = setup_script
         self.filename = filename
-        self.out_dir = os.path.abspath(str(out_dir))
+        self.out_dir = os.path.realpath(str(out_dir))
         self.out_file = str(out_file)
-        self.err_dir = os.path.abspath(str(err_dir))
+        self.err_dir = os.path.realpath(str(err_dir))
         self.err_file = str(err_file)
-        self.log_dir = os.path.abspath(str(log_dir))
+        self.log_dir = os.path.realpath(str(log_dir))
         self.log_file = str(log_file)
         self.cpus = int(cpus) if int(cpus) >= 1 else 1
         self.memory = str(memory)
@@ -265,7 +265,7 @@ class JobSet(object):
         file_contents = self.generate_file_contents(template, dag_mode)
 
         log.info('Writing HTCondor job file to %s', self.filename)
-        check_dir_create(os.path.dirname(os.path.abspath(self.filename)))
+        check_dir_create(os.path.dirname(os.path.realpath(self.filename)))
         with open(self.filename, 'w') as jfile:
             jfile.write(file_contents)
 
