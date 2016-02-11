@@ -3,7 +3,6 @@ Class to describe groups of jobs sharing common settings, that becomes one condo
 """
 
 
-import htcondenser.core.logging_config
 import logging
 import os
 import re
@@ -14,7 +13,6 @@ import htcondenser as ht
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 
 class JobSet(object):

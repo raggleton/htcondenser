@@ -3,7 +3,6 @@ DAGMan class to handle DAGs in HTCondor.
 """
 
 
-import htcondenser.core.logging_config
 import logging
 import os
 from subprocess import check_call
@@ -13,7 +12,6 @@ from htcondenser.core.common import date_time_now, check_dir_create
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 
 class DAGMan(object):

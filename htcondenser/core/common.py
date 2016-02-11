@@ -1,7 +1,6 @@
 """Functions/classes that are commonly used."""
 
 
-import htcondenser.core.logging_config
 import logging
 import os
 from subprocess import check_call, Popen, PIPE

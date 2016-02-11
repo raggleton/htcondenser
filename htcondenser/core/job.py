@@ -3,7 +3,6 @@ Classes to describe individual job, as part of a JobSet.
 """
 
 
-import htcondenser.core.logging_config
 import logging
 import os
 import htcondenser as ht
@@ -12,7 +11,6 @@ from itertools import chain
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 
 class Job(object):
