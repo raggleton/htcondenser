@@ -83,13 +83,16 @@ def run_job(in_args=sys.argv[1:]):
         if os.path.isfile(os.path.basename(args.exe)):
             os.chmod(os.path.basename(args.exe), 0555)
 
-        run_cmd = args.exe
+        # run_cmd = args.exe
+
         # If it's a local file, we need to do ./ for some reason...
-        if os.path.isfile(os.path.basename(args.exe)):
-            run_cmd = './' + os.path.basename(args.exe)
-        if args.args:
-            run_cmd += ' ' + ' '.join(args.args)
-        print setup_cmd + run_cmd
+        # But we must determine this AFTER running setup script,
+        # can't do it beforehand
+        run_cmd = "if [[ -e {exe} ]];then ./{exe} {args};else {exe} {args};fi"
+        run_cmd = run_cmd.format(exe=args.exe, args=' '.join(args.args))
+        print 'Contents of dir before running:'
+        print os.listdir(os.getcwd())
+        print "Running:", setup_cmd + run_cmd
         check_call(setup_cmd + run_cmd, shell=True)
 
         print 'In current dir:'
