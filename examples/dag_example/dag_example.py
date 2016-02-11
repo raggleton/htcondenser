@@ -18,7 +18,7 @@ LOG_STORE = "/storage/%s/dag_example/logs" % os.environ['LOGNAME']
 log_stem1 = 'simple1.$(cluster).$(process)'
 log_stem2 = 'simple2.$(cluster).$(process)'
 
-job_set1 = ht.JobSet(exe='./script1.sh',
+job_set1 = ht.JobSet(exe='script1.sh',
                      copy_exe=True,
                      filename='simple_job1.condor',
                      out_dir=LOG_STORE, out_file=log_stem1 + '.out',
@@ -31,7 +31,7 @@ jobD = ht.Job(name='jobD', args='D')
 job_set1.add_job(jobA)
 job_set1.add_job(jobD)
 
-job_set2 = ht.JobSet(exe='./script2.sh',
+job_set2 = ht.JobSet(exe='script2.sh',
                      copy_exe=True,
                      filename='simple_job2.condor',
                      out_dir=LOG_STORE, out_file=log_stem2 + '.out',

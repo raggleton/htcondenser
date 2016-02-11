@@ -16,7 +16,7 @@ HDFS_STORE = "/hdfs/user/%s/dag_example_common" % os.environ['LOGNAME']
 LOG_STORE = "/storage/%s/dag_example_common/logs" % os.environ['LOGNAME']
 log_stem = 'simple.$(cluster).$(process)'
 
-job_set = ht.JobSet(exe='./runScript.sh',
+job_set = ht.JobSet(exe='runScript.sh',
                     copy_exe=True,
                     setup_script='setupScript.sh',
                     filename='simple_job.condor',

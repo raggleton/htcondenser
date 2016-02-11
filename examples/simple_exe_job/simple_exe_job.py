@@ -33,7 +33,7 @@ log_stem = 'simple.$(cluster).$(process)'
 
 # Define a JobSet object for all jobs running the same exe
 # with same configuration for logs, etc
-job_set = ht.JobSet(exe='./showsize',
+job_set = ht.JobSet(exe='showsize',
                     copy_exe=True,
                     setup_script=None,
                     filename='simple_exe_job.condor',
