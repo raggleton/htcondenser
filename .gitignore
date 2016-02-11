@@ -2,5 +2,12 @@
 *.err
 *.out
 *.log
+*.status
+*.dag.*
+*.dag
+*.condor
 
 examples/simple_exe_job/showsize
+examples/dag_example/diamond.dot
+examples/dag_example_common/diamond.dot
+docs
