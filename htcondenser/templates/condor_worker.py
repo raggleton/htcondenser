@@ -102,6 +102,7 @@ def run_job(in_args=sys.argv[1:]):
             for (source, dest) in args.copyFromLocal:
                 print source, dest
                 if dest.startswith('/hdfs'):
+                    source = os.path.realpath(source)
                     dest = dest.replace('/hdfs', '')
                     check_call(['hadoop', 'fs', '-copyFromLocal', '-f', source, dest])
                 else:
