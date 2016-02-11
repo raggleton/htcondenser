@@ -78,7 +78,7 @@ def run_job(in_args=sys.argv[1:]):
         setup_cmd = ''
         if args.setup:
             os.chmod(args.setup, 0555)
-            setup_cmd = 'source ./' + args.setup + '; '
+            setup_cmd = 'source ./' + args.setup + ' && '
 
         if os.path.isfile(os.path.basename(args.exe)):
             os.chmod(os.path.basename(args.exe), 0555)
