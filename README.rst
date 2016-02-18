@@ -81,7 +81,8 @@ jobs must run as a prerequisite. This still retains the
 sharing of common parameters and to reduce the number of HTCondor submit
 files.
 
-.. topic:: DAGs (**D**\ irected **A**\ cyclic **G**\ raphs)
+
+.. topic:: Aside: DAGs (**D**\ irected **A**\ cyclic **G**\ raphs)
 
 
     Essentially, a way of tying jobs together, with the requirement that
@@ -103,6 +104,7 @@ files.
     `examples/dag\_example/diamond.pdf <examples/dag_example/diamond.pdf>`_.
     There, jobB and jobC can only run once jobA has completed.
     Similarly, jobD can only run once jobB and jobC have completed.
+
 
 Full documentation
 ------------------
