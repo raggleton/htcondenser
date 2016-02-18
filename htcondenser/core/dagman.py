@@ -351,11 +351,26 @@ class DAGMan(object):
         for manager in self.get_jobsets():
             manager.write(dag_mode=True)
 
-    def submit(self):
-        """Write all necessary submit files, transfer files to HDFS, and submit DAG."""
+    def submit(self, force=False):
+        """Write all necessary submit files, transfer files to HDFS, and submit DAG.
+        Also prints out info for user.
+
+        Parameters
+        ----------
+        force : bool, optional
+            Force condor_submit_dag
+
+        Raises
+        ------
+        CalledProcessError
+            If condor_submit_dag returns non-zero exit code.
+        """
         self.write()
         for manager in self.get_jobsets():
             manager.transfer_to_hdfs()
-        check_call(['condor_submit_dag', self.dag_filename])
+        cmds = ['condor_submit_dag', self.dag_filename]
+        if force:
+            cmds.insert(1, '-f')
+        check_call(cmds)
         log.info('Check DAG status:')
         log.info('DAGstatus.py %s', self.status_file)

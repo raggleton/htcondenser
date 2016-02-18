@@ -387,14 +387,27 @@ class JobSet(object):
         for job in self.jobs.itervalues():
             job.transfer_to_hdfs()
 
-    def submit(self):
+    def submit(self, force=False):
         """Write HTCondor job file, copy necessary files to HDFS, and submit.
         Also prints out info for user.
+
+        Parameters
+        ----------
+        force : bool, optional
+            Force condor_submit
+
+        Raises
+        ------
+        CalledProcessError
+            If condor_submit returns non-zero exit code.
         """
         self.write(dag_mode=False)
         self.transfer_to_hdfs()
 
-        check_call(['condor_submit', self.filename])
+        cmds = ['condor_submit', self.filename]
+        if force:
+            cmds.insert(1, '-f')
+        check_call(cmds)
 
         if self.log_dir == self.out_dir == self.err_dir:
             log.info('Output/error/htcondor logs written to %s', self.out_dir)
