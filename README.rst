@@ -109,7 +109,7 @@ files.
 Full documentation
 ------------------
 
-See: TODO readthedocs
+See `htcondenser on readthedocs <https://htcondenser.readthedocs.org/en/latest/>`_.
 
 Common pitfalls
 ---------------
