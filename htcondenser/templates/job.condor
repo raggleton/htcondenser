@@ -7,9 +7,7 @@ Log = {STDLOG}
 # This is required to be YES otherwise the Executable will NOT be copied across.
 should_transfer_files = YES
 
-transfer_input_files = {TRANSFER_INPUTFILES}
 when_to_transfer_output = ON_EXIT_OR_EVICT
-transfer_output_files = {TRANSFER_OUTPUTFILES}
 
 request_cpus = {CPUS}
 #request_memory = {MEMORY}

@@ -84,24 +84,6 @@ class JobSet(object):
         will only be 1 copy of this input file made on HDFS. Not sure if this
         will break anything...
 
-    transfer_input_files : list[str], optional
-        List of files to be transferred across for each job
-        (from initial_dir for relative paths).
-        **Usage of this argument is highly discouraged**
-        (except in scenarios where you have a very small number of jobs,
-        and the file(s) are very small) since it can lock up soolin due to both
-        processor load and network load.
-        Recommended to use input_files argument in Job() instead.
-
-    transfer_output_files : list[str], optional
-        List of files to be transferred across after each job
-        (to initial_dir for relative paths).
-        **Usage of this argument is highly discouraged**
-        (except in scenarios where you have a very small number of jobs,
-        and the file(s) are very small) since it can lock up soolin due to both
-        processor load and network load.
-        Recommended to use output_files argument in Job() instead.
-
     hdfs_store : str, optional
         If any local files (on `/user`) needs to be transferred to the job, it
         must first be stored on `/hdfs`. This argument specifies the directory
@@ -136,8 +118,6 @@ class JobSet(object):
                  transfer_hdfs_input=True,
                  share_exe_setup=False,
                  common_input_files=None,
-                 transfer_input_files=None,
-                 transfer_output_files=None,
                  hdfs_store=None,
                  dag_mode=False,
                  other_args=None):
@@ -163,13 +143,6 @@ class JobSet(object):
             common_input_files = []
         self.common_input_files = common_input_files[:]
         self.common_input_file_mirrors = []  # To hold FileMirror obj
-        if not transfer_output_files:
-            transfer_input_files = []
-        # need a copy, not a reference.
-        self.transfer_input_files = transfer_input_files[:]
-        if not transfer_output_files:
-            transfer_output_files = []
-        self.transfer_output_files = transfer_output_files[:]
         self.hdfs_store = hdfs_store
         # self.dag_mode = dag_mode
         self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
@@ -330,8 +303,6 @@ class JobSet(object):
             'CPUS': str(self.cpus),
             'MEMORY': self.memory,
             'DISK': self.disk,
-            'TRANSFER_INPUT_FILES': ','.join(self.transfer_input_files),
-            'TRANSFER_OUTPUT_FILES': ','.join(self.transfer_input_files),
             'OTHER_ARGS': other_args_str
         }
 
