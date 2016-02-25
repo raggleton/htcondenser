@@ -35,7 +35,7 @@ log_stem = 'simple.$(cluster).$(process)'
 job_set = ht.JobSet(exe='edmDumpEventContent',
                     copy_exe=False,
                     setup_script='setup_cmssw.sh',
-                    filename='simple_cmssw_job.condor',
+                    filename=os.path.join(LOG_STORE, 'simple_cmssw_job.condor'),
                     out_dir=LOG_STORE, out_file=log_stem + '.out',
                     err_dir=LOG_STORE, err_file=log_stem + '.err',
                     log_dir=LOG_STORE, log_file=log_stem + '.log',

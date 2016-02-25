@@ -20,7 +20,7 @@ log_stem2 = 'simple2.$(cluster).$(process)'
 
 job_set1 = ht.JobSet(exe='script1.sh',
                      copy_exe=True,
-                     filename='simple_job1.condor',
+                     filename=os.path.join(LOG_STORE, 'simple_job1.condor'),
                      out_dir=LOG_STORE, out_file=log_stem1 + '.out',
                      err_dir=LOG_STORE, err_file=log_stem1 + '.err',
                      log_dir=LOG_STORE, log_file=log_stem1 + '.log',
@@ -33,7 +33,7 @@ job_set1.add_job(jobD)
 
 job_set2 = ht.JobSet(exe='script2.sh',
                      copy_exe=True,
-                     filename='simple_job2.condor',
+                     filename=os.path.join(LOG_STORE, 'simple_job2.condor'),
                      out_dir=LOG_STORE, out_file=log_stem2 + '.out',
                      err_dir=LOG_STORE, err_file=log_stem2 + '.err',
                      log_dir=LOG_STORE, log_file=log_stem2 + '.log',
@@ -44,8 +44,8 @@ jobC = ht.Job(name='jobC', args='C')
 job_set2.add_job(jobB)
 job_set2.add_job(jobC)
 
-dag_man = ht.DAGMan(filename='diamond.dag',
-                    status_file='diamond.status',
+dag_man = ht.DAGMan(filename=os.path.join(LOG_STORE, 'diamond.dag'),
+                    status_file=os.path.join(LOG_STORE, 'diamond.status'),
                     dot='diamond.dot')
 
 dag_man.add_job(jobA)
@@ -59,4 +59,4 @@ for job in dag_man:
     print job.name, 'running:', job.manager.exe, ' '.join(job.args)
 
 # dag_man.write()
-dag_man.submit()
+dag_man.submit(force=True)

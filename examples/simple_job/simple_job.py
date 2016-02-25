@@ -31,7 +31,7 @@ log_stem = 'simple.$(cluster).$(process)'
 job_set = ht.JobSet(exe='simple_worker_script.sh',
                     copy_exe=True,
                     setup_script=None,
-                    filename='simple_job.condor',
+                    filename=os.path.join(LOG_STORE, 'simple_job.condor'),
                     out_dir=LOG_STORE, out_file=log_stem + '.out',
                     err_dir=LOG_STORE, err_file=log_stem + '.err',
                     log_dir=LOG_STORE, log_file=log_stem + '.log',
