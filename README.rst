@@ -117,6 +117,15 @@ Common pitfalls
 -  ``ERROR: proxy has expired``: you need to renew your Grid
    certificate: ``voms-proxy-init -voms cms``.
 
+- DAG submits, but then immediately disappears from running `condor_q -dag`: check your `.dagman.out` file. At the end, you will see something like: ::
+
+    Warning: failed to get attribute DAGNodeName
+    ERROR: log file /users/ab12345/htcondenser/examples/dag_example_common/./diamond.dag.nodes.log is on NFS.
+    Error: log file /users/ab12345/htcondenser/examples/dag_example_common/./diamond.dag.nodes.log on NFS
+    **** condor_scheduniv_exec.578172.0 (condor_DAGMAN) pid 601659 EXITING WITH STATUS 1
+
+This is telling you that you cannot put the DAG file (and therefore its log/output files) on a Network File Storage (NFS) due to the number of frequent writes. Instead put it on ``/storage`` or ``/scratch``.
+
 But I want XYZ!
 ---------------
 
