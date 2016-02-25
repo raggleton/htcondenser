@@ -5,6 +5,7 @@ DAGMan class to handle DAGs in HTCondor.
 
 import logging
 import os
+from copy import deepcopy
 from subprocess import check_call
 from collections import OrderedDict
 import htcondenser as ht
@@ -351,7 +352,7 @@ class DAGMan(object):
         for manager in self.get_jobsets():
             manager.write(dag_mode=True)
 
-    def submit(self, force=False):
+    def submit(self, force=False, submit_per_interval=10):
         """Write all necessary submit files, transfer files to HDFS, and submit DAG.
         Also prints out info for user.
 
@@ -359,6 +360,8 @@ class DAGMan(object):
         ----------
         force : bool, optional
             Force condor_submit_dag
+        submit_per_interval : int, optional
+            Number of DAGMan submissions per interval. The default 10 every 5 seconds.
 
         Raises
         ------
@@ -371,6 +374,10 @@ class DAGMan(object):
         cmds = ['condor_submit_dag', self.dag_filename]
         if force:
             cmds.insert(1, '-f')
-        check_call(cmds)
+        # modify the env vars to modify DAGMan config settings
+        # Not great, myabe should go for explciit config file instead?
+        mod_env = deepcopy(os.environ)
+        mod_env['_CONDOR_DAGMAN_MAX_SUBMITS_PER_INTERVAL'] = str(submit_per_interval)
+        check_call(cmds, env=mod_env)
         log.info('Check DAG status:')
         log.info('DAGstatus.py %s', self.status_file)
