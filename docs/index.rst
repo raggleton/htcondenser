@@ -6,12 +6,18 @@
 htcondenser documentation
 =========================
 
+**htcondenser** is a simple library for submitting simple jobs & DAGs on the Bristol machines.
+
+It was designed to allow easy setting up of jobs and deployment on worker nodes, without the user worrying too much about writing custom scripts, or copying across files to HDFS.
+
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
    readme_link
+   dagstatus
    apidoc/htcondenser.core
 
 Indices and tables

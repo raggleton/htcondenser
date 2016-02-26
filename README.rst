@@ -4,12 +4,11 @@ htcondenser
 What is it?
 -----------
 
-A simple library for submitting simple jobs & DAGs on the Bristol
-machines.
+**htcondenser** is a simple library for submitting simple jobs & DAGs on the Bristol machines.
 
-Designed to allow easy setting up of jobs and deployment on worker node,
-without the user worrying too much about writing custom scripts, or
-copying across files to HDFS.
+It was designed to allow easy setting up of jobs and deployment on worker nodes,
+without the user worrying too much about writing custom scripts, or copying across files to HDFS.
+
 
 Note that this probably won't work for more custom or complicated
 workflows, but may be a useful starting point.
