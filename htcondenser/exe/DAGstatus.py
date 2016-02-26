@@ -1,16 +1,8 @@
 #!/usr/bin/env python
 """
-Code to interpret a DAGman status output, and present it in a more user-friendly manner.
+Code to present the DAGman status output in a more user-friendly manner.
 
-First run `source setup.sh` to add to PATH.
-Then run by doing:
-
-```
-DAGstatus.py [status file [... status file]]
-```
-
-TODO:
-- maybe use namedtuples instead of full-blown classes?
+Add this directory to your PATH to run DAGstatus.py from anywhere.
 """
 
 
@@ -341,10 +333,16 @@ if __name__ == "__main__":
                         help="only printout very short summary of all jobs",
                         action='store_true')
     parser.add_argument("statusFile",
-                        help="name(s) of DAG status file(s), separated by spaces",
+                        help="DAG status file(s), separated by spaces",
                         nargs="*")
     args = parser.parse_args()
+
     if args.verbose:
         log.setLevel(logging.DEBUG)
+
+    if len(args.statusFile) == 0:
+        parser.print_help()
+        exit()
+
     for f in args.statusFile:
         process(f, args.summary)
