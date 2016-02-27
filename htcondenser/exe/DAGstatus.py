@@ -11,6 +11,7 @@ import sys
 import logging
 import os
 from collections import OrderedDict, namedtuple
+import json
 
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
@@ -26,33 +27,54 @@ def strip_doublequotes(line):
 
 
 class TColors:
-    """Common codes for terminal coloured output.
+    """Handle terminal coloured output.
+    Use TColors.COLORS['ENDC'] to stop the colour.
 
-    Use TColors.ENDC to stop the colour.
+    Also returns colours based on job/DAG status, and for various other parts.
 
     e.g.:
-    >>> print TColors.GREEN + "It's not easy being green" + TColors.ENDC
+    >>> print TColors.COLORS['GREEN'] + "It's not easy being green" + TColors.COLORS['ENDC']
     """
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    fmt_dict = {}
+    with open('DAGstatus_config.json') as js:
+        fmt_dict = json.load(js)
 
-    @staticmethod
-    def color(state):
-        """Return color code based on state string."""
-        if state.startswith("STATUS_ERROR"):
-            return TColors.RED
-        elif state.startswith("STATUS_SUBMITTED"):
-            return TColors.BLUE
-        elif state.startswith("STATUS_DONE"):
-            return TColors.GREEN
+    COLORS = fmt_dict['colors']
+    for k, v in COLORS.iteritems():
+        COLORS[k] = str(v).decode('string_escape')
+    STATUS_COLORS = fmt_dict['statuses']
+    FMT_COLORS = fmt_dict['formatting']
+
+    @classmethod
+    def printc(cls, text, color_code):
+        """Print coloured output, and reset the colour after the output"""
+        print color_code + text + cls.COLORS['ENDC']
+
+    @classmethod
+    def status_color(cls, status):
+        """Return color code based on status string.
+        If no matching status string, returns end-color.
+        """
+        if status in cls.fmt_dict['statuses'].keys():
+            try:
+                return cls.COLORS[cls.fmt_dict['statuses'][status]]
+            except KeyError:
+                log.exception('Cannot find colour with name %s', cls.fmt_dict['statuses'][status])
         else:
-            return TColors.ENDC
+            return cls.COLORS['ENDC']
+
+    @classmethod
+    def formatting_color(cls, section):
+        """Return color code based on section.
+        If no matching section label, returns end-color.
+        """
+        if section in cls.FMT_COLORS.keys():
+            try:
+                return cls.COLORS[cls.FMT_COLORS[section]]
+            except KeyError:
+                log.exception('Cannot find colour with name %s', cls.FMT_COLORS[section])
+        else:
+            return cls.COLORS['ENDC']
 
 
 # To hold info about a given line
@@ -157,8 +179,6 @@ def process(status_filename, summary):
         (i.e. not DagStatus, NodeStatus or StatusEnd).
     """
 
-    print TColors.YELLOW + status_filename + " :" + TColors.ENDC
-
     dag_status = None
     node_statuses = []
     status_end = None
@@ -212,7 +232,7 @@ def process(status_filename, summary):
                 line_parsed = interpret_line(line)
                 contents[line_parsed.key] = line_parsed
     dag_status.node_statuses = node_statuses
-    print_table(dag_status, node_statuses, status_end, summary)
+    print_table(status_filename, dag_status, node_statuses, status_end, summary)
 
 
 def interpret_line(line):
@@ -234,11 +254,14 @@ def interpret_line(line):
     return Line(key=parts[0], value=value, comment=comment)
 
 
-def print_table(dag_status, node_statuses, status_end, summary):
+def print_table(status_filename, dag_status, node_statuses, status_end, summary):
     """Print a pretty-ish table with important info
 
     Parameters
     ----------
+    status_filename : str
+        Filename of status file
+
     dag_status : DagStatus
         Object holding info about overall status of DAG.
 
@@ -251,7 +274,6 @@ def print_table(dag_status, node_statuses, status_end, summary):
     summary : bool
         If True, only prints out summary of DAG. Otherwise prints out info about
         each job in DAG.
-
     """
     # Here we auto-create the formatting strings for each row,
     # and auto-size each column based on max size of contents
@@ -298,30 +320,29 @@ def print_table(dag_status, node_statuses, status_end, summary):
         columns = term_columns
 
     # Now actually print the table
+    print TColors.formatting_color('FILENAME') + status_filename + " :" + TColors.COLORS['ENDC']
+
     if not summary:
-        print "~" * columns
         # Print info for each job.
-        print TColors.ENDC + job_header
+        print "~" * columns
+        print TColors.COLORS['ENDC'] + job_header
         print "-" * columns
         for n in node_statuses:
-            print (TColors.color(n.node_status) +
+            print (TColors.status_color(n.node_status) +
                    job_format.format(*[n.__dict__[v] for v in job_dict.values()]))
-        print TColors.ENDC + "-" * columns
+        print TColors.COLORS['ENDC'] + "-" * columns
     # print summary of all jobs
     print "~" * columns
     print summary_header
     print "-" * columns
-    # Make it coloured depending on job status
-    # sum_col = TColors.ENDC
-    # if summary:
-    print (TColors.color(dag_status.dag_status) +
+    print (TColors.status_color(dag_status.dag_status.split()[0]) +
            summary_format.format(*[getattr(dag_status, v) for v in summary_dict.values()]))
     if not summary:
-        print TColors.ENDC + "-" * columns
         # print time of next update
+        print TColors.COLORS['ENDC'] + "-" * columns
         print "Status recorded at:", status_end.end_time
         print "Next update:       ", status_end.next_update
-    print TColors.ENDC + "~" * columns
+    print TColors.COLORS['ENDC'] + "~" * columns
 
 
 if __name__ == "__main__":
