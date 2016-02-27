@@ -34,6 +34,10 @@ class TColors:
 
     e.g.:
     >>> print TColors.COLORS['GREEN'] + "It's not easy being green" + TColors.COLORS['ENDC']
+
+    or better:
+
+    TColors.printc("It's not easy being green", TColors.COLORS['GREEN'])
     """
     fmt_dict = {}
     with open('DAGstatus_config.json') as js:
@@ -320,29 +324,29 @@ def print_table(status_filename, dag_status, node_statuses, status_end, summary)
         columns = term_columns
 
     # Now actually print the table
-    print TColors.formatting_color('FILENAME') + status_filename + " :" + TColors.COLORS['ENDC']
+    TColors.printc(status_filename, TColors.formatting_color('FILENAME'))
 
     if not summary:
         # Print info for each job.
         print "~" * columns
-        print TColors.COLORS['ENDC'] + job_header
+        print job_header
         print "-" * columns
         for n in node_statuses:
-            print (TColors.status_color(n.node_status) +
-                   job_format.format(*[n.__dict__[v] for v in job_dict.values()]))
-        print TColors.COLORS['ENDC'] + "-" * columns
+            TColors.printc(job_format.format(*[n.__dict__[v] for v in job_dict.values()]),
+                           TColors.status_color(n.node_status))
+        print "-" * columns
     # print summary of all jobs
     print "~" * columns
     print summary_header
     print "-" * columns
-    print (TColors.status_color(dag_status.dag_status.split()[0]) +
-           summary_format.format(*[getattr(dag_status, v) for v in summary_dict.values()]))
+    TColors.printc(summary_format.format(*[getattr(dag_status, v) for v in summary_dict.values()]),
+                   TColors.status_color(dag_status.dag_status.split()[0]))
     if not summary:
         # print time of next update
-        print TColors.COLORS['ENDC'] + "-" * columns
+        print "-" * columns
         print "Status recorded at:", status_end.end_time
         print "Next update:       ", status_end.next_update
-    print TColors.COLORS['ENDC'] + "~" * columns
+    print "~" * columns
 
 
 if __name__ == "__main__":
