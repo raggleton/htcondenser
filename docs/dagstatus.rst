@@ -9,9 +9,9 @@ A handy tool for monitor jobs in a DAG: `DAGstatus.py <https://github.com/raggle
 
 Usage
 -----
-Ensure that you set the `DAGMan.status_filename` attribute. Then pass that filename to `DAGstatus.py`.
+Ensure that the ``DAGMan.status_filename`` attribute is set. Then pass that filename to ``DAGstatus.py`` to view the current DAG status. Use the ``DAGMan.status_update_period`` attribute to control how often the status file is updated.
 
-If you are not using the `htcondenser` library then ensure you have the following line in your DAG description file: ::
+If you are not using the ``htcondenser`` library then ensure you have the following line in your DAG description file: ::
 
     NODE_STATUS_FILE <filename> <refresh interval in seconds>
 
@@ -36,6 +36,13 @@ General usage instructions:::
 Installation
 ------------
 
-Running `setup.sh <https://github.com/raggleton/htcondenser/blob/master/setup.sh>`_ will add the script to your `$PATH`. To avoid having to remember to run it each time you login, you can manually add the `exe` directory to your `$PATH` in `~/.bashrc` or `~/.bash_profile`.
+Running `setup.sh <https://github.com/raggleton/htcondenser/blob/master/setup.sh>`_ will add the script to your ``$PATH``. To avoid having to remember to run it each time you login, you can manually add the ``exe`` directory to your ``$PATH`` in ``~/.bashrc`` or ``~/.bash_profile``.
 
 
+Customisation
+-------------
+
+It is possible to customise the coloured output to suit your personal preferences. This is done in `DAGstatus_config.json <https://github.com/raggleton/htcondenser/blob/master/htcondenser/exe/DAGstatus_config.json>`_.
+The user must define any colours or styles used in the ``colors`` object. These can then be used in the ``statuses`` and ``formatting`` objects. Any combination of colours/styles can be used, by concatenating with a ``+``.
+
+Note that concatenating two colours will only use the rightmost colour.

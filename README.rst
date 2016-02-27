@@ -26,7 +26,7 @@ An area on ``/hdfs/users`` that you have read/write permission. Python
 How do I get/install it?
 ------------------------
 
-For now, run ``setup.sh``. This will just add the current directory to
+For now, clone this repo & run ``setup.sh``. This will just add the current directory to
 ``PYTHONPATH``. This required every time you login (or add to
 ``~/.bashrc``/``~/.bash_profile``).
 
@@ -56,6 +56,12 @@ designed to show off some features:
    that rely on other jobs to run first.
 
 If you want to run all examples, use ``examples/runAllExamples.sh``.
+
+Monitoring jobs/DAGs
+--------------------
+
+If you submit your jobs as a DAG, then there is a simple monitoring tools, ``DAGstatus.py``.
+See :doc:`dagstatus` for more details.
 
 A bit more detail
 -----------------
