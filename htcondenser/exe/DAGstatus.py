@@ -61,7 +61,7 @@ class TColors:
         """
         if status in cls.fmt_dict['statuses'].keys():
             try:
-                return cls.COLORS[cls.fmt_dict['statuses'][status]]
+                return ''.join([cls.COLORS[part.strip()] for part in cls.STATUS_COLORS[status].split("+")])
             except KeyError:
                 log.exception('Cannot find colour with name %s', cls.fmt_dict['statuses'][status])
         else:
@@ -74,7 +74,7 @@ class TColors:
         """
         if section in cls.FMT_COLORS.keys():
             try:
-                return cls.COLORS[cls.FMT_COLORS[section]]
+                return ''.join([cls.COLORS[part.strip()] for part in cls.FMT_COLORS[section].split("+")])
             except KeyError:
                 log.exception('Cannot find colour with name %s', cls.FMT_COLORS[section])
         else:

@@ -17,6 +17,6 @@
     },
 
     "formatting": {
-        "FILENAME": "YELLOW"
+        "FILENAME": "YELLOW + UNDERLINE"
     }
 }
