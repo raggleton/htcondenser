@@ -7,7 +7,6 @@ Add this directory to your PATH to run DAGstatus.py from anywhere.
 
 
 import argparse
-import sys
 import logging
 import os
 from collections import OrderedDict, namedtuple
