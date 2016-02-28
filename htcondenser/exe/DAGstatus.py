@@ -377,7 +377,8 @@ def print_table(status_filename, dag_status, node_statuses, status_end, only_sum
         # print time of next update
         print "-" * columns
         print "Status recorded at:", status_end.end_time
-        print "Next update:       ", status_end.next_update
+        TColors.printc("Next update:        %s" % status_end.next_update,
+                       TColors.formatting_color('NEXT_UPDATE'))
     print "~" * columns
 
 

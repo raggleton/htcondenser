@@ -17,6 +17,7 @@
     },
 
     "formatting": {
-        "FILENAME": "YELLOW + UNDERLINE"
+        "FILENAME": "PURPLE + UNDERLINE",
+        "NEXT_UPDATE": "YELLOW"
     }
 }
