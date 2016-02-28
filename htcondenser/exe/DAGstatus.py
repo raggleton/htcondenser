@@ -40,7 +40,7 @@ class TColors:
     TColors.printc("It's not easy being green", TColors.COLORS['GREEN'])
     """
     fmt_dict = {}
-    with open('DAGstatus_config.json') as js:
+    with open(os.path.join(os.path.dirname(__file__), 'DAGstatus_config.json')) as js:
         fmt_dict = json.load(js)
 
     COLORS = fmt_dict['colors']
