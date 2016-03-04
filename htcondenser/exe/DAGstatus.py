@@ -296,6 +296,12 @@ def generate_StatusEnd(contents):
                      next_update=contents['NextUpdate'].comment)
 
 
+def create_format_str(parts_dict):
+    format_parts = ["{%d:<%d}" % (i, v["len"]) for i, v in enumerate(parts_dict.itervalues())]
+    format_str = " | ".join(format_parts)
+    return format_str
+
+
 def print_table(status_filename, dag_status, node_statuses, status_end, only_summary):
     """Print a pretty-ish table with important info
 
@@ -321,35 +327,31 @@ def print_table(status_filename, dag_status, node_statuses, status_end, only_sum
     # and auto-size each column based on max size of contents
 
     # For info about each node:
-    job_dict = OrderedDict()  # holds column title as key and object attribute name as value
-    job_dict["Node"] = "node"
-    job_dict["Status"] = "node_status"
-    job_dict["Retries"] = "retry_count"
-    job_dict["Detail"] = "status_details"
+    job_dict = OrderedDict()  # holds column title as key and dict of attr, field length, as value
+    job_dict["Node"] = {"attr": "node", "len": 0}
+    job_dict["Status"] = {"attr": "node_status", "len": 0}
+    job_dict["Retries"] = {"attr": "retry_count", "len": 0}
+    job_dict["Detail"] = {"attr": "status_details", "len": 0}
     # Auto-size each column - find maximum of column header and column contents
-    job_col_widths = [max([len(str(getattr(x, v))) for x in node_statuses] + [len(k)])
-                      for k, v in job_dict.iteritems()]
-    # make formatter string to be used for each row, auto calculates number of columns
-    # note that the %d are required for python 2.6, which doesn't allow just {}
-    job_format_parts = ["{%d:<%d}" % (i, l) for i, l in zip(range(len(job_dict.keys())), job_col_widths)]
-    job_format = " | ".join(job_format_parts)
+    for k, v in job_dict.iteritems():
+        job_dict[k]["len"] = max([len(str(getattr(s, v["attr"]))) for s in node_statuses] + [len(k)])
+    job_format = create_format_str(job_dict)
     job_header = job_format.format(*job_dict.keys())
 
     # For info about summary of all jobs:
     summary_dict = OrderedDict()
-    summary_dict["DAG Status"] = "dag_status"
-    summary_dict["Total"] = "nodes_total"
-    summary_dict["Queued"] = "nodes_queued"
-    summary_dict["Idle"] = "job_procs_idle"
-    summary_dict["Running"] = "job_procs_running"
-    summary_dict["Running %"] = "nodes_running_percent"
-    summary_dict["Failed"] = "nodes_failed"
-    summary_dict["Done"] = "nodes_done"
-    summary_dict["Done %"] = "nodes_done_percent"
-    summary_col_widths = [max(len(str(getattr(dag_status, v))), len(k))
-                          for k, v in summary_dict.iteritems()]
-    summary_format_parts = ["{%d:<%d}" % (i, l) for i, l in zip(range(len(summary_dict.keys())), summary_col_widths)]
-    summary_format = "  |  ".join(summary_format_parts)
+    summary_dict["DAG Status"] = {"attr": "dag_status", "len": 0}
+    summary_dict["Total"] = {"attr": "nodes_total", "len": 0}
+    summary_dict["Queued"] = {"attr": "nodes_queued", "len": 0}
+    summary_dict["Idle"] = {"attr": "job_procs_idle", "len": 0}
+    summary_dict["Running"] = {"attr": "job_procs_running", "len": 0}
+    summary_dict["Running %"] = {"attr": "nodes_running_percent", "len": 0}
+    summary_dict["Failed"] = {"attr": "nodes_failed", "len": 0}
+    summary_dict["Done"] = {"attr": "nodes_done", "len": 0}
+    summary_dict["Done %"] = {"attr": "nodes_done_percent", "len": 0}
+    for k, v in summary_dict.iteritems():
+        summary_dict[k]["len"] = max(len(str(getattr(dag_status, v["attr"]))), len(k))
+    summary_format = create_format_str(summary_dict)
     summary_header = summary_format.format(*summary_dict.keys())
 
     # Now figure out how many char columns to occupy for the *** and ---
@@ -370,14 +372,14 @@ def print_table(status_filename, dag_status, node_statuses, status_end, only_sum
         print job_header
         print "-" * columns
         for n in node_statuses:
-            TColors.printc(job_format.format(*[n.__dict__[v] for v in job_dict.values()]),
+            TColors.printc(job_format.format(*[n.__dict__[v["attr"]] for v in job_dict.itervalues()]),
                            TColors.status_color(n.node_status))
         print "-" * columns
     # print summary of all jobs
     print "~" * columns
     print summary_header
     print "-" * columns
-    TColors.printc(summary_format.format(*[getattr(dag_status, v) for v in summary_dict.values()]),
+    TColors.printc(summary_format.format(*[getattr(dag_status, v["attr"]) for v in summary_dict.itervalues()]),
                    TColors.status_color(dag_status.dag_status.split()[0]))
     if not only_summary:
         # print time of next update
