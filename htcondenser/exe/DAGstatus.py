@@ -11,6 +11,8 @@ import logging
 import os
 from collections import OrderedDict, namedtuple
 import json
+import sys
+from subprocess import check_output
 
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
@@ -164,7 +166,7 @@ class StatusEnd(ClassAd):
 
 
 def process(status_filename, only_summary):
-    """Main function to process the status file
+    """Main function to process the status file and print it on screen.
 
     Parameters
     ----------
@@ -174,12 +176,6 @@ def process(status_filename, only_summary):
     only_summary : bool
         If True, only prints out summary of DAG. Otherwise prints out info about
         each job in DAG.
-
-    Raises
-    ------
-    KeyError
-        If processing encounters block with unknown type
-        (i.e. not DagStatus, NodeStatus or StatusEnd).
     """
     dag_status, node_statuses, status_end = interpret_status_file(status_filename)
     print_table(status_filename, dag_status, node_statuses, status_end, only_summary)
@@ -198,6 +194,11 @@ def interpret_status_file(status_filename):
     DagStatus, list[NodeStatus], StatusEnd
         Objects with info abotu DAG, all nodes, and end info (update times).
 
+    Raises
+    ------
+    KeyError
+        If processing encounters block with unknown type
+        (i.e. not DagStatus, NodeStatus or StatusEnd).
     """
     dag_status = None
     node_statuses = []
@@ -246,6 +247,11 @@ def interpret_line(line):
     ----------
     line : str
         Line to be interpreted.
+
+    Returns
+    -------
+    Line
+        Line object filled with key, value, and any comments.
     """
     raw = line.replace('\n', '').strip()
     parts = [x.strip() for x in raw.split('=')]
@@ -383,7 +389,8 @@ def print_table(status_filename, dag_status, node_statuses, status_end, only_sum
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-v", "--verbose",
                         help="enable debugging mesages",
                         action='store_true')
@@ -404,3 +411,5 @@ if __name__ == "__main__":
 
     for f in args.statusFile:
         process(f, args.summary)
+
+    sys.exit(0)
