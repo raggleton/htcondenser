@@ -372,14 +372,14 @@ def print_table(status_filename, dag_status, node_statuses, status_end, only_sum
         print job_header
         print "-" * columns
         for n in node_statuses:
-            TColors.printc(job_format.format(*[n.__dict__[v["attr"]] for v in job_dict.itervalues()]),
+            TColors.printc(job_format.format(*[str(n.__dict__[v["attr"]])[0:v['len']] for v in job_dict.itervalues()]),
                            TColors.status_color(n.node_status))
         print "-" * columns
     # print summary of all jobs
     print "~" * columns
     print summary_header
     print "-" * columns
-    TColors.printc(summary_format.format(*[getattr(dag_status, v["attr"]) for v in summary_dict.itervalues()]),
+    TColors.printc(summary_format.format(*[str(getattr(dag_status, v["attr"]))[0:v['len']] for v in summary_dict.itervalues()]),
                    TColors.status_color(dag_status.dag_status.split()[0]))
     if not only_summary:
         # print time of next update
