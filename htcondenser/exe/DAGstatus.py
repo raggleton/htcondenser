@@ -296,9 +296,20 @@ def generate_StatusEnd(contents):
                      next_update=contents['NextUpdate'].comment)
 
 
-def create_format_str(parts_dict):
+def create_format_str(parts_dict, separator):
+    """Create a format string out of parts_dict for use with .format()
+
+    Parameters
+    ----------
+    parts_dict : dict[str, dict]
+
+    Returns
+    -------
+    str
+        String for use when formatting rows of table.
+    """
     format_parts = ["{%d:<%d}" % (i, v["len"]) for i, v in enumerate(parts_dict.itervalues())]
-    format_str = " | ".join(format_parts)
+    format_str = separator.join(format_parts)
     return format_str
 
 
@@ -325,6 +336,7 @@ def print_table(status_filename, dag_status, node_statuses, status_end, only_sum
     """
     # Here we auto-create the formatting strings for each row,
     # and auto-size each column based on max size of contents
+    separator = " | "
 
     # For info about each node:
     job_dict = OrderedDict()  # holds column title as key and dict of attr, field length, as value
@@ -335,7 +347,20 @@ def print_table(status_filename, dag_status, node_statuses, status_end, only_sum
     # Auto-size each column - find maximum of column header and column contents
     for k, v in job_dict.iteritems():
         job_dict[k]["len"] = max([len(str(getattr(s, v["attr"]))) for s in node_statuses] + [len(k)])
-    job_format = create_format_str(job_dict)
+
+    job_format = create_format_str(job_dict, separator)
+
+    total_length = (sum([v['len'] for v in job_dict.itervalues()]) +
+                    (len(separator) * (len(job_dict) - 1)))
+
+    # If total width is too large for the terminal, we force it to fit by taking
+    # away space from the node name column, but keeping at least 1 char.
+    term_height, term_width = get_terminal_size()
+    if total_length > term_width:
+        job_dict["Node"]["len"] -= (total_length - term_width + 1)
+        job_dict['Node']['len'] = max(job_dict['Node']['len'], 1)
+    job_format = create_format_str(job_dict, separator)
+
     job_header = job_format.format(*job_dict.keys())
 
     # For info about summary of all jobs:
@@ -351,17 +376,14 @@ def print_table(status_filename, dag_status, node_statuses, status_end, only_sum
     summary_dict["Done %"] = {"attr": "nodes_done_percent", "len": 0}
     for k, v in summary_dict.iteritems():
         summary_dict[k]["len"] = max(len(str(getattr(dag_status, v["attr"]))), len(k))
-    summary_format = create_format_str(summary_dict)
+    summary_format = create_format_str(summary_dict, separator)
     summary_header = summary_format.format(*summary_dict.keys())
 
     # Now figure out how many char columns to occupy for the *** and ---
     columns = len(summary_header) if only_summary else max(len(job_header), len(summary_header))
     columns += 1
-    term_rows, term_columns = os.popen('stty size', 'r').read().split()
-    term_rows = int(term_rows)
-    term_columns = int(term_columns)
-    if columns > term_columns:
-        columns = term_columns
+    if columns > term_width:
+        columns = term_width
 
     # Now actually print the table
     TColors.printc(status_filename, TColors.formatting_color('FILENAME'))
