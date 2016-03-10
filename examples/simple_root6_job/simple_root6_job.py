@@ -2,16 +2,17 @@
 
 
 """
-Example of how to call call a setup script to setup libs, etc, and then call
-ROOT6 to run a macro.
+Example of how to get ROOT6 to run a macro.
 
 Until I find a better way to setup a ROOT release agnostically
 (ie outside of CMSSW), this will rely on you running inside a CMSSW environment.
 i.e. `which root` should return a valid path. THis works becasue we pass the user's
 env vars to the worker node, so it will access ROOT on CVMFS.
 
-ROOT6 is called in batch mode, executing the macro hist.C. Note that the
-arguments (-l, -b, hist.C) go into the job.args field.
+ROOT6 is called in batch mode, executing the macro hist.C.
+This will print a histogram to file, and fill a TTree, saved in 'simple_tree.root'.
+This will be put in HDFS_STORE.
+Note that the arguments (-l, -b, hist.C) go into the `job.args` field.
 
 Note that before running you MUST specify a location on HDFS to store
 input/output files (HDFS_STORE), otherwise it will not be able to transfer them.
@@ -50,7 +51,7 @@ job_set = ht.JobSet(exe='root',
 job = ht.Job(name='root6_job',
              args='-l -q -b hist.C'.split(),
              input_files=['hist.C'],
-             output_files=['hist.pdf'],
+             output_files=['hist.pdf', 'simple_tree.root'],
              quantity=1)
 job_set.add_job(job)
 
