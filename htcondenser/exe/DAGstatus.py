@@ -12,7 +12,6 @@ import os
 from collections import OrderedDict, namedtuple
 import json
 import sys
-from subprocess import check_output
 
 
 logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.INFO)
@@ -80,6 +79,12 @@ class TColors:
                 log.exception('Cannot find colour with name %s', cls.FMT_COLORS[section])
         else:
             return cls.COLORS['ENDC']
+
+
+def get_terminal_size():
+    """Get width of current terminal, in pixels"""
+    term_rows, term_columns = os.popen('stty size', 'r').read().split()
+    return int(term_rows), int(term_columns)
 
 
 # To hold info about a given line

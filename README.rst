@@ -48,6 +48,9 @@ designed to show off some features:
    submission, you must compile the exe: ``gcc showsize.c -o showsize``.
    Test it runs ok by doing: ``./showsize``.
 
+-  ``simple_root6_job/simple_root6job.py``:
+   Run ROOT6 over a macro to produce a PDF. (Requires existing ROOT setup)
+
 -  ``simple_cmssw_job/simple_cmssw_job.py``:
    setup a CMSSW environment and run ``edmDumpEventContent`` inside it.
 
