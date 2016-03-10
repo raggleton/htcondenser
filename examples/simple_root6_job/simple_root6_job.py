@@ -46,8 +46,6 @@ job_set = ht.JobSet(exe='root',
                     hdfs_store=HDFS_STORE)
 
 # Now add individual Jobs
-# Here we are running our script multiple times, but passing it different
-# arguments, and telling it to produce different output files.
 job = ht.Job(name='root6_job',
              args='-l -q -b hist.C'.split(),
              input_files=['hist.C'],
