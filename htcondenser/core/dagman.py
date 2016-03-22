@@ -111,7 +111,7 @@ class DAGMan(object):
             raise TypeError('Cannot added a non-Job object to DAGMan.')
 
         if job.name in self.jobs:
-            raise KeyError()
+            raise KeyError('Job with name %s already exists in DAG - names must be unique' % job.name)
 
         # Append necessary job arguments to any user opts.
         job_vars = job_vars or ""
