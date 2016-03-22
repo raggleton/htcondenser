@@ -120,6 +120,7 @@ class Job(object):
             Location of directory to store mirrored copies.
         """
         for ifile in self.input_files:
+            ifile = os.path.abspath(ifile)
             basename = os.path.basename(ifile)
             mirror_dir = hdfs_mirror_dir
             if (ifile in [self.manager.exe, self.manager.setup_script] and
@@ -194,7 +195,6 @@ class Job(object):
             job_args.extend(['--setup', os.path.basename(self.manager.setup_script)])
 
         new_args = self.args[:]
-
         if self.manager.transfer_hdfs_input:
             # Replace input files in exe args with their worker node copies
             for ifile in chain(self.input_file_mirrors, self.manager.common_input_file_mirrors):
@@ -234,6 +234,6 @@ class Job(object):
             job_args.append('--args')
             job_args.extend(new_args)
 
-        # Convert everything to str
-        job_args = [str(x) for x in job_args]
+        # Convert everything to str, and convert double quotes properly
+        job_args = [str(x).replace('"', '""') for x in job_args]
         return ' '.join(job_args)
