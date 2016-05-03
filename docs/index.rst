@@ -17,6 +17,7 @@ Contents:
    :maxdepth: 2
 
    readme_link
+   usage
    dagstatus
    apidoc/htcondenser.core
 

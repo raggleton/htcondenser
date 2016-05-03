@@ -21,7 +21,7 @@ An area on ``/hdfs/users`` that you have read/write permission. Python
 
 **For developers:** To build the docs, you'll need
 `sphinx <http://www.sphinx-doc.org/en/stable/index.html>`_
-(``pip install sphinx``).
+(``pip install sphinx``). ``flake8`` and ``pep8`` are also useful tools, and are available via ``pip`` or ``conda``.
 
 How do I get/install it?
 ------------------------
@@ -58,7 +58,7 @@ designed to show off some features:
    run a DAG (directed-acyclic-graph) - this allows you to schedule jobs
    that rely on other jobs to run first.
 
-If you want to run all examples, use ``examples/runAllExamples.sh``.
+For more info/background, see :doc:`usage`.
 
 Monitoring jobs/DAGs
 --------------------
