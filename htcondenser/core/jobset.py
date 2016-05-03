@@ -116,7 +116,7 @@ class JobSet(object):
                  cpus=1, memory='100MB', disk='100MB',
                  certificate=False,
                  transfer_hdfs_input=True,
-                 share_exe_setup=False,
+                 share_exe_setup=True,
                  common_input_files=None,
                  hdfs_store=None,
                  dag_mode=False,
