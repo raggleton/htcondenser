@@ -143,12 +143,15 @@ class JobSet(object):
             common_input_files = []
         self.common_input_files = common_input_files[:]
         self.common_input_file_mirrors = []  # To hold FileMirror obj
+        if hdfs_store is None:
+            raise IOError('Need to specify hdfs_store')
         self.hdfs_store = hdfs_store
         # self.dag_mode = dag_mode
         self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
         self.other_job_args = other_args
         # Hold all Job object this JobSet manages, key is Job name.
         self.jobs = OrderedDict()
+
 
         # Setup directories
         # ---------------------------------------------------------------------
