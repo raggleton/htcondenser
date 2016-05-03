@@ -108,8 +108,10 @@ files.
     **Acyclic**: the graph cannot have cycles, e.g.
     ``A ->- B ->- C ->- A``.
 
-    For an example see the diamond DAG:
-    `examples/dag\_example/diamond.pdf <examples/dag_example/diamond.pdf>`_.
+    For an example see the diamond DAG (``examples/dag_example``):
+
+    .. image:: ../examples/dag_example/diamond.png
+
     There, jobB and jobC can only run once jobA has completed.
     Similarly, jobD can only run once jobB and jobC have completed.
 
