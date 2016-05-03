@@ -195,6 +195,7 @@ class JobSet(object):
             Location of directory to store mirrored copies.
         """
         for ifile in self.common_input_files:
+            ifile = os.path.abspath(ifile)
             basename = os.path.basename(ifile)
             mirror_dir = hdfs_mirror_dir
             hdfs_mirror = (ifile if ifile.startswith('/hdfs')

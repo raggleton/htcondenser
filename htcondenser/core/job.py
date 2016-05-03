@@ -32,7 +32,7 @@ class Job(object):
     output_files : list[str], optional
         List of output files to be transferred across to HDFS after executable finishes.
         If the path is on HDFS, then that will be the destination. Otherwise
-        `hdfs_store`/`job.name` will be used as destination directory.
+        `hdfs_mirror_dir` will be used as destination directory.
 
     quantity : int, optional
         Quantity of this Job to submit.
@@ -120,7 +120,6 @@ class Job(object):
             Location of directory to store mirrored copies.
         """
         for ifile in self.input_files:
-            ifile = os.path.abspath(ifile)
             basename = os.path.basename(ifile)
             mirror_dir = hdfs_mirror_dir
             if (ifile in [self.manager.exe, self.manager.setup_script] and
