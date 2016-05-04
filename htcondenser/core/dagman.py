@@ -21,7 +21,8 @@ class DAGMan(object):
     Parameters
     ----------
     filename : str
-        Filename to write DAG jobs.
+        Filename to write DAG jobs. This cannot be on /users,
+        must be on NFS drive, e.g. /storage.
 
     status_file : str, optional
         Filename for DAG status file. See
@@ -55,6 +56,8 @@ class DAGMan(object):
                  other_args=None):
         super(DAGMan, self).__init__()
         self.dag_filename = filename
+        if os.path.abspath(self.dag_filename).startswith('/users'):
+            raise IOError('You cannot put DAG filename on /users - must be on NFS (e.g.. /storage')
         self.status_file = status_file
         self.status_update_period = str(status_update_period)
         self.dot = dot
