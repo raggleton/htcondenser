@@ -6,9 +6,8 @@ What is it?
 
 **htcondenser** is a simple library for submitting simple jobs & DAGs on the Bristol machines.
 
-It was designed to allow easy setting up of jobs and deployment on worker nodes,
+It was designed to allow easy setting up of jobs and deployment on worker nodes, whilst following the `Code of Conduct <https://wikis.bris.ac.uk/pages/viewpage.action?title=Code+of+Conduct&spaceKey=dic>`_
 without the user worrying too much about writing custom scripts, or copying across files to HDFS.
-
 
 Note that this probably won't work for more custom or complicated
 workflows, but may be a useful starting point.
@@ -38,25 +37,27 @@ How do I get started?
 Look in the ``examples`` directory. There are several directories, each
 designed to show off some features:
 
--  ``simple_job/simple_job.py``:
-   submits 3 jobs, each running a simple shell script, but with
+-  `simple_job/simple_job.py <https://github.com/raggleton/htcondenser/blob/master/examples/simple_job/simple_job.py>`_:
+   Submits 3 jobs, each running a simple shell script, but with
    different arguments. Designed to show off how to use the
    ``htcondenser`` classes.
 
--  ``simple_exe_job/simple_exe_job.py``:
-   submits a job using a user-compiled exe, ``showsize``. Before
+-  `simple_exe_job/simple_exe_job.py <https://github.com/raggleton/htcondenser/blob/master/examples/simple_exe_job/simple_exe_job.py>`_:
+   Submits a job using a user-compiled exe, ``showsize``. Before
    submission, you must compile the exe: ``gcc showsize.c -o showsize``.
    Test it runs ok by doing: ``./showsize``.
 
--  ``simple_root6_job/simple_root6job.py``:
-   Run ROOT6 over a macro to produce a PDF and TFile with a TTree. (Requires existing ROOT setup)
+-  `simple_root6_job/simple_root6job.py <https://github.com/raggleton/htcondenser/blob/master/examples/simple_root6_job/simple_root6_job.py>`_:
+   Run ROOT6 over a macro to produce a PDF and TFile with a TTree. (**TO FIX:** Requires existing ROOT setup)
 
--  ``simple_cmssw_job/simple_cmssw_job.py``:
-   setup a CMSSW environment and run ``edmDumpEventContent`` inside it.
+-  `simple_cmssw_job/simple_cmssw_job.py <https://github.com/raggleton/htcondenser/tree/master/examples/simple_cmssw_job>`_:
+   Setup a CMSSW environment and run ``edmDumpEventContent`` inside it. For a CRAB-alternative, see `cmsRunCondor <https://github.com/raggleton/condor-comforter/tree/master/cmsRun>`_
 
--  ``dag_example/dag_example.py``:
-   run a DAG (directed-acyclic-graph) - this allows you to schedule jobs
+-  `dag_example/dag_example.py <https://github.com/raggleton/htcondenser/blob/master/examples/dag_example/dag_example.py>`_:
+   Run a DAG (directed-acyclic-graph) - this allows you to schedule jobs
    that rely on other jobs to run first.
+
+- `dag_example_common/dag_example_common.py <https://github.com/raggleton/htcondenser/blob/master/examples/dag_example_common/dag_example_common.py>`_ has a similar setup but shows the use of ``common_input_files`` arg to save time/space.
 
 For more info/background, see :doc:`usage`.
 

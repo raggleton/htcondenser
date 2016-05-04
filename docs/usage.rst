@@ -16,7 +16,7 @@ There are only 2 basic classes needed: ``JobSet`` and ``Job``.
 
 ``Job`` represents a single job to be run - the execution of some program or script, with arguments, inputs and outputs.
 
-``JobSet`` defines a group of ``Job`` s that share common properties, such that they can all share a common condor submit file.
+``JobSet`` defines a group of ``Job`` s that share common properties (e.g. executable), so that they can all share a common condor submit file.
 
 
 By specifying various options, these classes are designed to handle:
@@ -46,6 +46,15 @@ Then one defines the relevant ``Job`` instances with job-specific arguments and 
                  output_files=['simple_results_1.txt'],
                  quantity=1)
 
+    job = ht.Job(name='job2',
+                 args=['simple_text.txt', ..., other_word],
+                 input_files=['simple_text.txt'],
+                 output_files=['simple_results_2.txt'],
+                 quantity=1)
+
+Note that the files specified by ``input_files`` will automatically get transferred to HDFS before the job starts. This avoids reading straight from ``/users``.
+Files specified by ``output_files`` will automatically be transferred to HDFS from the worker node when the job ends.
+
 Each ``Job`` must then be added to the governing ``JobSet``::
 
     job_set.add_job(job)
@@ -69,7 +78,7 @@ The ``Job`` object only has a few arguments, since the majority of configuration
 
 * ``name`` is a unique specifier for the Job
 * ``args`` allows the user to specify argument unique to this job
-* ``hdfs_mirror_dir`` specifies the location on ``/hdfs`` to store input & output files, as well as the job executable & setup script if ``JobSet.share_exe_setup = False``.
+* ``hdfs_mirror_dir`` specifies the location on ``/hdfs`` to store input & output files, as well as the job executable & setup script if ``JobSet.share_exe_setup = False``. The default for this is the governing ``JobSet.hdfs_store/Job.name``
 * ``input_files/output_files`` allows the user to specify any input files for this job. The output files specified will automatically be transferred to ``hdfs_mirror_dir`` after the exe has finished.
 
 
