@@ -140,7 +140,7 @@ This is telling you that you cannot put the DAG file (and therefore its log/outp
 But I want XYZ!
 ---------------
 
-Log an Issue, make a PR, or email me directly.
+Log an `Issue <https://github.com/raggleton/htcondenser/issues>`_, make a `Pull Request <https://github.com/raggleton/htcondenser/pulls>`_, or email me directly.
 
 I want to help
 --------------
