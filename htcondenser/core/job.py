@@ -34,6 +34,10 @@ class Job(object):
         If the path is on HDFS, then that will be the destination. Otherwise
         `hdfs_mirror_dir` will be used as destination directory.
 
+        e.g. myfile.txt => Job.hdfs_mirror_dir/myfile.txt,
+        results/myfile.txt => Job.hdfs_mirror_dir/myfile.txt,
+        /hdfs/A/B/myfile.txt => /hdfs/A/B/myfile.txt
+
     quantity : int, optional
         Quantity of this Job to submit.
 
@@ -140,6 +144,8 @@ class Job(object):
         """
         for ofile in self.output_files:
             basename = os.path.basename(ofile)
+            # is this sensible? shoudl we not have
+            # ... else join(hdfs_mirror_dir, ofile) ?
             hdfs_mirror = (ofile if ofile.startswith('/hdfs')
                            else os.path.join(hdfs_mirror_dir, basename))
             # set worker copy depending on if it's on hdfs or not, since we
