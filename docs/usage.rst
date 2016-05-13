@@ -1,13 +1,34 @@
 Usage
 =====
 
-Here we explain a bit more aobut the basic **htcondenser** classes.
+Here we explain a bit more about the basic **htcondenser** classes.
 
 Full details on the API can be found in :doc:`apidoc/htcondenser.core`
 
 For all snippets below, I've used::
 
     import htcondenser as ht
+
+
+Some basic rules/principles
+---------------------------
+
+These go along with the `code of conduct <https://wikis.bris.ac.uk/display/dic/Code+of+Conduct>`_ and help your jobs run smoothly.
+
+* The worker node is restricted to what it can read/write to:
+
+    - **Read-only**: ``/storage``, ``/software``, ``/users``
+    - **Read + Write**: ``/hdfs``
+
+* However ``/storage``, ``/software``, ``/users`` are all accessed over the network.
+
+.. DANGER:: Reading from ``/users`` with multiple jobs running concurrently is guaranteed to lock up the whole network, including soolin.
+
+* Therefore, it is best to only use ``/hdfs`` for reading & writing to/from worker nodes.
+
+* Similarly, ``JobSet.filename``, ``.out_dir``, ``.err_dir``, ``.log_dir``, and ``DAGMan.filename`` and ``.status`` should be specified on ``/storage`` or similar - **not** ``/users``.
+
+* `hadoop commands <https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/FileSystemShell.html>`_ should be used with ``/hdfs`` - use of ``cp``, ``rm``, etc can lead to lockup with many or large files.
 
 Basic non-DAG jobs
 --------------------
@@ -52,8 +73,10 @@ Then one defines the relevant ``Job`` instances with job-specific arguments and 
                  output_files=['simple_results_2.txt'],
                  quantity=1)
 
-Note that the files specified by ``input_files`` will automatically get transferred to HDFS before the job starts. This avoids reading straight from ``/users``.
+Note that the files specified by ``input_files`` will automatically get transferred to HDFS before the job starts.
+This avoids reading directly from ``/users``.
 Files specified by ``output_files`` will automatically be transferred to HDFS from the worker node when the job ends.
+Note that any arguments you pass to the job will automatically be updated to reflect any transfers to/from ``/hdfs``: *you do not need to worry about this*.
 
 Each ``Job`` must then be added to the governing ``JobSet``::
 
@@ -81,6 +104,37 @@ The ``Job`` object only has a few arguments, since the majority of configuration
 * ``hdfs_mirror_dir`` specifies the location on ``/hdfs`` to store input & output files, as well as the job executable & setup script if ``JobSet.share_exe_setup = False``. The default for this is the governing ``JobSet.hdfs_store/Job.name``
 * ``input_files/output_files`` allows the user to specify any input files for this job. The output files specified will automatically be transferred to ``hdfs_mirror_dir`` after the exe has finished.
 
+Input and output file arguments
+-------------------------------
+
+The ``input_files``/``output_files`` args work in the following manner.
+
+For ``input_files``:
+
+* ``myfile.txt``: the file is assumed to reside in the current directory. It will be copied to ``Job.hdfs_mirror_dir``. On the worker node, it will be copied to the worker.
+* ``results/myfile.txt``: similar to the previous case, however **the directory structure will be removed**, and thus ``myfile.txt`` will end up in ``Job.hdfs_mirror_dir``. On the worker node, it will be copied to the worker.
+* ``/storage/results/myfile.txt``: same as for ``results/myfile.txt``
+* ``/hdfs/results/myfile.txt``: since this file already exists on ``/hdfs`` it will not be copied. If ``JobSet.transfer_hdfs_input`` is ``True`` it will be copied to the worker and accessed from there, otherwise will be accessed directly from ``/hdfs``.
+
+For ``output_files``:
+
+* ``myfile.txt``: assumes that the file will be produced in ``$PWD``. This will be copied to ``Job.hdfs_mirror_dir`` after ``JobSet.exe`` has finished.
+* ``results/myfile.txt``: assumes that the file will be produced as ``$PWD/results/myfile.txt``. The file will be copied to ``Job.hdfs_mirror_dir`` after ``JobSet.exe`` has finished, but **the directory structure will be removed**.
+* ``/storage/results/myfile.txt``: same as for ``results/myfile.txt``. Note that jobs cannot write to anywhere but ``/hdfs``.
+* ``/hdfs/results/myfile.txt``: this assumes a file ``myfile.txt`` will be produced by the exe. It will then be copied to ``/hdfs/results/myfile.txt``. This allows for a custom output location.
+
+
+**Rational**: this behaviour may seem confusing. However, it tries to account for multiple scenarios and best practices:
+
+* Jobs on the worker node should ideally read from ``/hdfs``. ``/storage`` and ``/software`` are both readable-only by jobs. However, to avoid any potential network lock-up, I figured it was best to put it all on ``/hdfs``
+
+* This has the nice side-effect of creating a 'snapshot' of the code used for the job, incase you ever need to refer to it.
+
+* If a file ``/storage/A/B.txt`` wanted to be used, how would one determine where to put it on ``/hdfs``?
+
+* The one downfall is that output files and input files end up in the same directory on ``/hdfs``, which may note be desirable.
+
+**Note that I am happy to discuss or change this behaviour - please log an issue**: `github issues <https://github.com/raggleton/htcondenser/issues>`_
 
 DAG jobs
 --------
@@ -123,6 +177,7 @@ If the user wishes to enable logging messages, one simply has to add into their 
 
     log = logging.getLogger(__name__)
 
+where ``__name__`` resolves to e.g. ``htcondenser.core.Job``.
 The user can then configure the level of messages produced, and various other options.
 At ``logging.INFO`` level, this typically produces info about files being transferred, and job files written.
 See the `full logging library documentation <https://docs.python.org/2/library/logging.html>`_ for more details.
