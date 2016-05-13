@@ -19,6 +19,7 @@ Contents:
    readme_link
    usage
    dagstatus
+   faq
    apidoc/htcondenser.core
 
 Indices and tables
