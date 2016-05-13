@@ -17,10 +17,10 @@ These go along with the `code of conduct <https://wikis.bris.ac.uk/display/dic/C
 
 * The worker node is restricted to what it can read/write to:
 
-    - **Read-only**: ``/storage``, ``/software``, ``/users``
+    - **Read-only**: ``/software``, ``/users``
     - **Read + Write**: ``/hdfs``
 
-* However ``/storage``, ``/software``, ``/users`` are all accessed over the network.
+* However ``/software`` and ``/users`` are all accessed over the network.
 
 .. DANGER:: Reading from ``/users`` with multiple jobs running concurrently is guaranteed to lock up the whole network, including soolin.
 
