@@ -1,0 +1,29 @@
+digraph DAG {
+    label="DAGMan Job status at Sun Jan 31 21:02:04 2016";
+
+    "process_0" [shape=ellipse label="process_0 (I)"];
+    "process_1" [shape=ellipse label="process_1 (I)"];
+    "process_2" [shape=ellipse label="process_2 (I)"];
+    "process_3" [shape=ellipse label="process_3 (I)"];
+    "process_4" [shape=ellipse label="process_4 (I)"];
+    "process_5" [shape=ellipse label="process_5 (I)"];
+    "hadd" [shape=ellipse label="hadd (I)"];
+    "rm0" [shape=ellipse label="rm0 (I)"];
+    "rm1" [shape=ellipse label="rm1 (I)"];
+    "rm2" [shape=ellipse label="rm2 (I)"];
+    "rm3" [shape=ellipse label="rm3 (I)"];
+    "rm4" [shape=ellipse label="rm4 (I)"];
+    "rm5" [shape=ellipse label="rm5 (I)"];
+    "process_0" -> "hadd";
+    "process_1" -> "hadd";
+    "process_2" -> "hadd";
+    "process_3" -> "hadd";
+    "process_4" -> "hadd";
+    "process_5" -> "hadd";
+    "hadd" -> "rm0";
+    "hadd" -> "rm1";
+    "hadd" -> "rm2";
+    "hadd" -> "rm3";
+    "hadd" -> "rm4";
+    "hadd" -> "rm5";
+}
