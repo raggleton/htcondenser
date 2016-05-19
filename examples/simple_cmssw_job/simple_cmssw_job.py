@@ -4,6 +4,10 @@
 """
 Example of how to call call a setup script to setup CMSSW then call a command.
 
+This is the equivalent of running:
+
+edmDumpEventContent root://xrootd.unl.edu//store/mc/RunIISpring15Digi74/QCD_Pt_30to50_TuneCUETP8M1_13TeV_pythia8/GEN-SIM-RAW/AVE_20_BX_25ns_tsg_MCRUN2_74_V7-v1/00000/00228B32-44F0-E411-9FC7-0025905C3DCE.root
+
 setup_cmssw.sh runs some shell commands to setup a CMSSW release.
 We use the setup_script arg in JobSet() to define a setup script to run before
 executing commands.

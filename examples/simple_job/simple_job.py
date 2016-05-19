@@ -4,6 +4,12 @@
 """
 Simple set of jobs to show off how to use htcondenser.
 
+This is the equivalent of running:
+
+./simple_worker_script.sh simple_text.txt simple_results_0.txt Christmas Easter
+./simple_worker_script.sh simple_text.txt simple_results_1.txt Christmas NYE
+./simple_worker_script.sh simple_text.txt simple_results_2.txt Christmas Summer
+
 This will create 3 jobs, each running a simple shell script with arguments
 (simple_worker_script.sh), will also read an input file (simple_text.txt),
 and produces an output file.

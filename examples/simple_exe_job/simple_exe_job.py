@@ -4,6 +4,10 @@
 """
 Example of how to use a user-compiled executable in a HTCondor job.
 
+This is the equivalent of running:
+
+./showsize
+
 Before running you MUST compile the exe first:
 
 gcc showsize.c -o showsize

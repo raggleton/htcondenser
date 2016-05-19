@@ -4,6 +4,10 @@
 """
 Example of how to get ROOT6 to run a macro.
 
+This is the equivalent of running:
+
+root -l -q -b hist.C
+
 Until I find a better way to setup a ROOT release agnostically
 (ie outside of CMSSW), this will rely on you running inside a CMSSW environment.
 i.e. `which root` should return a valid path. THis works becasue we pass the user's
