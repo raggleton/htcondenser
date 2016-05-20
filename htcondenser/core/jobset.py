@@ -156,9 +156,9 @@ class JobSet(object):
         # Setup directories
         # ---------------------------------------------------------------------
         for d in [self.out_dir, self.err_dir, self.log_dir, self.hdfs_store]:
-            if d and not os.path.isdir(d):
+            if d:
                 log.info('Making directory %s', d)
-                os.makedirs(d)
+                check_dir_create(d)
 
         # Check output filenames are not blank
         # ---------------------------------------------------------------------

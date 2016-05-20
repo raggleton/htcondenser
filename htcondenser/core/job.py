@@ -6,7 +6,7 @@ Classes to describe individual job, as part of a JobSet.
 import logging
 import os
 import htcondenser as ht
-from htcondenser.core.common import cp_hdfs
+from htcondenser.core.common import cp_hdfs, check_dir_create
 from itertools import chain
 
 
@@ -174,8 +174,8 @@ class Job(object):
                 continue
             files_to_transfer.append(ifile)
 
-        if len(files_to_transfer) > 0 and not os.path.isdir(self.hdfs_mirror_dir):
-            os.makedirs(self.hdfs_mirror_dir)
+        if len(files_to_transfer) > 0:
+            check_dir_create(self.hdfs_mirror_dir)
 
         for ifile in files_to_transfer:
             log.info('Copying %s -->> %s', ifile.original, ifile.hdfs)

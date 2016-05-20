@@ -43,7 +43,10 @@ def check_dir_create(directory):
         If 'directory' already exists but is a file.
     """
     if not os.path.isdir(directory):
-        os.makedirs(directory)
+        if os.path.abspath(directory).startswith('/hdfs'):
+            check_call(['hadoop', 'fs', '-mkdir', '-p', os.path.abspath(directory).strip('/hdfs')])
+        else:
+            os.makedirs(directory)
 
 
 def cp_hdfs(src, dest, force=True):
