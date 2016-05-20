@@ -7,7 +7,7 @@ and execution of a job.
 
 
 import argparse
-from subprocess import check_call
+from subprocess import check_call, Popen, PIPE
 import sys
 import shutil
 import os
@@ -40,6 +40,13 @@ class WorkerArgParser(argparse.ArgumentParser):
 def run_job(in_args=sys.argv[1:]):
     """Main function to run commands on worker node."""
     print '>>>> condor_worker.py logging:'
+    proc = Popen(['hostname', '-f'], stdout=PIPE, stderr=PIPE)
+    out, err = proc.communicate()
+    if err == '':
+        print 'Running on', out
+    else:
+        raise RuntimeError(err)
+
     parser = WorkerArgParser(description=__doc__)
     args = parser.parse_args(in_args)
     print 'Args:'
