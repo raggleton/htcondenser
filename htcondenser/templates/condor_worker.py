@@ -96,7 +96,8 @@ def run_job(in_args=sys.argv[1:]):
         # But we must determine this AFTER running setup script,
         # can't do it beforehand
         run_cmd = "if [[ -e {exe} ]];then ./{exe} {args};else {exe} {args};fi"
-        run_cmd = run_cmd.format(exe=args.exe, args=' '.join(args.args))
+        run_args = ' '.join(args.args) if args.args else ''
+        run_cmd = run_cmd.format(exe=args.exe, args=run_args)
         print 'Contents of dir before running:'
         print os.listdir(os.getcwd())
         print "Running:", setup_cmd + run_cmd
