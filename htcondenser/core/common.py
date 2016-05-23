@@ -44,7 +44,7 @@ def check_dir_create(directory):
     """
     if not os.path.isdir(directory):
         if os.path.abspath(directory).startswith('/hdfs'):
-            check_call(['hadoop', 'fs', '-mkdir', '-p', os.path.abspath(directory).replace('/hdfs', '/')])
+            check_call(['hadoop', 'fs', '-mkdir', '-p', os.path.abspath(directory).replace('/hdfs', '')])
         else:
             os.makedirs(directory)
 
