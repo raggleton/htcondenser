@@ -112,15 +112,18 @@ def run_job(in_args=sys.argv[1:]):
             print 'POST EXECUTION: Copy to HDFS:'
             for (source, dest) in args.copyFromLocal:
                 print source, dest
-                if dest.startswith('/hdfs'):
-                    source = os.path.realpath(source)
-                    dest = dest.replace('/hdfs', '')
-                    check_call(['hadoop', 'fs', '-copyFromLocal', '-f', source, dest])
+                if not os.path.exists(source):
+                    print 'File {0} does not exist - cannot copy to {1}'.format(source, dest)
                 else:
-                    if os.path.isfile(source):
-                        shutil.copy2(source, dest)
-                    elif os.path.isdir(source):
-                        shutil.copytree(source, dest)
+                    if dest.startswith('/hdfs'):
+                        source = os.path.realpath(source)
+                        dest = dest.replace('/hdfs', '')
+                        check_call(['hadoop', 'fs', '-copyFromLocal', '-f', source, dest])
+                    else:
+                        if os.path.isfile(source):
+                            shutil.copy2(source, dest)
+                        elif os.path.isdir(source):
+                            shutil.copytree(source, dest)
     finally:
         # Cleanup
         # ---------------------------------------------------------------------
