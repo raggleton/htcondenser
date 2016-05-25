@@ -117,7 +117,10 @@ def run_job(in_args=sys.argv[1:]):
                 else:
                     if dest.startswith('/hdfs'):
                         source = os.path.realpath(source)
-                        check_create_dir(os.path.dirname(dest))
+                        dest_folder = os.path.dirname(dest)
+                        if not os.path.exists(dest_folder):
+                            dest_folder = dest_folder.replace('/hdfs', '')
+                            check_call(['hdfs', 'dfs', '-mkdir', '-p',dest_folder])
                         dest = dest.replace('/hdfs', '')
                         check_call(['hadoop', 'fs', '-copyFromLocal', '-f', source, dest])
                     else:
