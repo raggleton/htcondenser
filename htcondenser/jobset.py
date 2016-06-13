@@ -7,7 +7,7 @@ import logging
 import os
 import re
 from subprocess import check_call
-from htcondenser.core.common import cp_hdfs, check_certificate, check_dir_create
+from htcondenser.common import cp_hdfs, check_certificate, check_dir_create
 from collections import OrderedDict
 import htcondenser as ht
 
@@ -147,7 +147,7 @@ class JobSet(object):
             raise IOError('Need to specify hdfs_store')
         self.hdfs_store = hdfs_store
         # self.dag_mode = dag_mode
-        self.job_template = os.path.join(os.path.dirname(__file__), '../templates/job.condor')
+        self.job_template = os.path.join(os.path.dirname(__file__), 'templates/job.condor')
         self.other_job_args = other_args
         # Hold all Job object this JobSet manages, key is Job name.
         self.jobs = OrderedDict()
@@ -276,7 +276,7 @@ class JobSet(object):
             raise IndexError('You have not added any jobs to this JobSet.')
 
         worker_script = os.path.join(os.path.dirname(__file__),
-                                     '../templates/condor_worker.py')
+                                     'templates/condor_worker.py')
 
         # Update other_job_args if dag
         if dag_mode:

@@ -6,7 +6,7 @@ Classes to describe individual job, as part of a JobSet.
 import logging
 import os
 import htcondenser as ht
-from htcondenser.core.common import cp_hdfs, check_dir_create
+from htcondenser.common import cp_hdfs, check_dir_create
 from itertools import chain
 
 
