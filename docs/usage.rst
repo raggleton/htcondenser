@@ -164,7 +164,7 @@ Finally, instead of calling ``JobSet.submit()``, we instead call ``DAGMan.submit
 
     dag_man.submit()
 
-If ``DAGMan.status_file`` was defined, then one can uses the ``DAGstatus.py`` script to provide a user-friendly status summary table. See :doc:`dagstatus`.
+If ``DAGMan.status_file`` was defined, then one can uses the ``DAGStatus`` script to provide a user-friendly status summary table. See :doc:`dagstatus`.
 
 
 Logging

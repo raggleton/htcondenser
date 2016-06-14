@@ -64,7 +64,7 @@ For more info/background, see :doc:`usage`.
 Monitoring jobs/DAGs
 --------------------
 
-If you submit your jobs as a DAG, then there is a simple monitoring tools, ``DAGstatus.py``.
+If you submit your jobs as a DAG, then there is a simple monitoring tools, ``DAGstatus``.
 See :doc:`dagstatus` for more details.
 
 A bit more detail
