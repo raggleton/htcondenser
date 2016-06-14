@@ -1,12 +1,15 @@
 htcondenser package
 ===================
 
-Subpackages
------------
+Submodules
+----------
 
 .. toctree::
 
-    htcondenser.core
+   htcondenser.common
+   htcondenser.dagman
+   htcondenser.job
+   htcondenser.jobset
 
 Module contents
 ---------------

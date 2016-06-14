@@ -25,11 +25,12 @@ An area on ``/hdfs/users`` that you have read/write permission. Python
 How do I get/install it?
 ------------------------
 
-For now, clone this repo & run ``setup.sh``. This will just add the current directory to
-``PYTHONPATH``. This required every time you login (or add to
-``~/.bashrc``/``~/.bash_profile``).
+**NEW:**
 
-**TODO** Needs a better way (pip...).
+Install using ``pip``: ::
+
+  pip install --user git+https://github.com/raggleton/htcondenser.git@setup
+
 
 How do I get started?
 ---------------------

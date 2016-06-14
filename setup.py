@@ -5,7 +5,7 @@ from glob import glob
 
 setup(
     name='htcondenser',
-    version='0.1.0',
+    version='0.2.0',
     description="htcondenser is a simple library for submitting"
     " simple jobs & DAGs on the Bristol machines.",
     author='Robin Aggleton',

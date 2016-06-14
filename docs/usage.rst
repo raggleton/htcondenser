@@ -3,7 +3,7 @@ Usage
 
 Here we explain a bit more about the basic **htcondenser** classes.
 
-Full details on the API can be found in :doc:`apidoc/htcondenser.core`
+Full details on the API can be found in :doc:`apidoc/htcondenser`
 
 For all snippets below, I've used::
 
