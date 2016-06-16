@@ -25,11 +25,19 @@ An area on ``/hdfs/users`` that you have read/write permission. Python
 How do I get/install it?
 ------------------------
 
-**NEW:**
+It depends.
 
-Install using ``pip``: ::
+- You can install using ``pip`` for a given python install instance: ::
 
   pip install --user git+https://github.com/raggleton/htcondenser.git@setup
+
+**NOTE** this **will not work properly** with CMSSW, etc since they use a different ``python`` and hence look for packages in different places. **TODO: fix this**.
+
+In a similar vein, ``conda`` users will need to install this for each conda environment.
+
+To do this use the "global" install:
+
+- Manual (global) install (for use with CMSSW, etc): clone this repository, then run ``./setup.sh``. This will be required every time you login, so you may want to add it to your ``.bashrc``.
 
 
 How do I get started?
