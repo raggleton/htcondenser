@@ -14,13 +14,14 @@ It was designed to allow easy setting up of jobs and deployment on worker nodes,
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    readme_link
    usage
    dagstatus
    faq
-   apidoc/htcondenser.core
+   changelog_link
+   apidoc/htcondenser
 
 Indices and tables
 ==================

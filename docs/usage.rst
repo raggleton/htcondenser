@@ -3,7 +3,7 @@ Usage
 
 Here we explain a bit more about the basic **htcondenser** classes.
 
-Full details on the API can be found in :doc:`apidoc/htcondenser.core`
+Full details on the API can be found in :doc:`apidoc/htcondenser`
 
 For all snippets below, I've used::
 
@@ -164,7 +164,7 @@ Finally, instead of calling ``JobSet.submit()``, we instead call ``DAGMan.submit
 
     dag_man.submit()
 
-If ``DAGMan.status_file`` was defined, then one can uses the ``DAGstatus.py`` script to provide a user-friendly status summary table. See :doc:`dagstatus`.
+If ``DAGMan.status_file`` was defined, then one can uses the ``DAGStatus`` script to provide a user-friendly status summary table. See :doc:`dagstatus`.
 
 
 Logging

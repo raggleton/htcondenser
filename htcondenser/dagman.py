@@ -9,7 +9,7 @@ from copy import deepcopy
 from subprocess import check_call
 from collections import OrderedDict
 import htcondenser as ht
-from htcondenser.core.common import date_time_now, check_dir_create
+from htcondenser.common import date_time_now, check_dir_create
 
 
 log = logging.getLogger(__name__)
@@ -383,4 +383,4 @@ class DAGMan(object):
         mod_env['_CONDOR_DAGMAN_MAX_SUBMITS_PER_INTERVAL'] = str(submit_per_interval)
         check_call(cmds, env=mod_env)
         log.info('Check DAG status:')
-        log.info('DAGstatus.py %s', self.status_file)
+        log.info('DAGStatus %s', self.status_file)

@@ -1,7 +1,7 @@
 DAGstatus
 =========
 
-A handy tool for monitor jobs in a DAG: `DAGstatus.py <https://github.com/raggleton/htcondenser/blob/master/htcondenser/exe/DAGstatus.py>`_
+A handy tool for monitor jobs in a DAG: `DAGStatus <https://github.com/raggleton/htcondenser/blob/master/htcondenser/bin/DAGStatus>`_
 
 
 .. image:: DAGstatus_full.png
@@ -9,7 +9,7 @@ A handy tool for monitor jobs in a DAG: `DAGstatus.py <https://github.com/raggle
 
 Usage
 -----
-Ensure that the ``DAGMan.status_filename`` attribute is set. Then pass that filename to ``DAGstatus.py`` to view the current DAG status. Use the ``DAGMan.status_update_period`` attribute to control how often the status file is updated.
+Ensure that the ``DAGMan.status_filename`` attribute is set. Then pass that filename to ``DAGStatus`` to view the current DAG status. Use the ``DAGMan.status_update_period`` attribute to control how often the status file is updated.
 
 If you are not using the ``htcondenser`` library then ensure you have the following line in your DAG description file: ::
 
@@ -19,10 +19,10 @@ See `2.10.12 Capturing the Status of Nodes in a File <https://research.cs.wisc.e
 
 General usage instructions:::
 
-    usage: DAGstatus.py [-h] [-v] [-s] [statusFile [statusFile ...]]
+    usage: DAGStatus [-h] [-v] [-s] [statusFile [statusFile ...]]
 
     Code to present the DAGman status output in a more user-friendly manner. Add
-    this directory to PATH to run DAGstatus.py it from anywhere.
+    this directory to PATH to run DAGStatus it from anywhere.
 
     positional arguments:
       statusFile     name(s) of DAG status file(s), separated by spaces
@@ -33,16 +33,10 @@ General usage instructions:::
       -s, --summary  only printout very short summary of all jobs
 
 
-Installation
-------------
-
-Running `setup.sh <https://github.com/raggleton/htcondenser/blob/master/setup.sh>`_ will add the script to your ``$PATH``. To avoid having to remember to run it each time you login, you can manually add the ``exe`` directory to your ``$PATH`` in ``~/.bashrc`` or ``~/.bash_profile``.
-
-
 Customisation
 -------------
 
-It is possible to customise the coloured output to suit your personal preferences. This is done in `DAGstatus_config.json <https://github.com/raggleton/htcondenser/blob/master/htcondenser/exe/DAGstatus_config.json>`_.
+It is possible to customise the coloured output to suit your personal preferences. This is done in `DAGstatus_config.json <https://github.com/raggleton/htcondenser/blob/master/htcondenser/bin/DAGStatus_config.json>`_.
 The user must define any colours or styles used in the ``colors`` object. These can then be used in the ``statuses`` and ``formatting`` objects. Any combination of colours/styles can be used, by concatenating with a ``+``.
 
 Note that concatenating two colours will only use the rightmost colour.
