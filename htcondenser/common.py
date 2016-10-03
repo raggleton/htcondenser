@@ -43,6 +43,9 @@ def check_dir_create(directory):
         If 'directory' already exists but is a file.
     """
     if not os.path.isdir(directory):
+        if os.path.isfile(directory):
+            raise IOError('%s is already a file, cannot make dir' % directory)
+        log.info("Making directory %s", directory)
         if os.path.abspath(directory).startswith('/hdfs'):
             check_call(['hadoop', 'fs', '-mkdir', '-p', os.path.abspath(directory).replace('/hdfs', '')])
         else:

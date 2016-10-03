@@ -157,7 +157,6 @@ class JobSet(object):
         # ---------------------------------------------------------------------
         for d in [self.out_dir, self.err_dir, self.log_dir, self.hdfs_store]:
             if d:
-                log.info('Making directory %s', d)
                 check_dir_create(d)
 
         # Check output filenames are not blank
