@@ -1,5 +1,6 @@
 #!/bin/bash -e
 #
 # Hack for adding htcondenser package to system
-export PYTHONPATH=$PYTHONPATH:$(pwd)
-export PATH=$PATH:$(pwd)/bin
+CDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export PYTHONPATH=$PYTHONPATH:$CDIR
+export PATH=$PATH:$CDIR/bin
