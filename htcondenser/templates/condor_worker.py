@@ -11,6 +11,7 @@ from subprocess import check_call, Popen, PIPE
 import sys
 import shutil
 import os
+import glob
 
 
 class WorkerArgParser(argparse.ArgumentParser):
@@ -63,16 +64,25 @@ def run_job(in_args=sys.argv[1:]):
         # ---------------------------------------------------------------------
         if args.copyToLocal:
             print 'PRE EXECUTION: Copy to local:'
+            copy_list = []
             for (source, dest) in args.copyToLocal:
-                print source, dest
-                if source.startswith('/hdfs'):
-                    source = source.replace('/hdfs', '')
-                    check_call(['hadoop', 'fs', '-copyToLocal', source, dest])
+                # handle globbing
+                for match in glob.iglob(source):
+                    copy_list.append((match, dest))
+
+            for (source, dest) in copy_list:
+                print source, "-->", dest
+                if not os.path.exists(source):
+                    print 'File {0} does not exist - cannot copy to {1}'.format(source, dest)
                 else:
-                    if os.path.isfile(source):
-                        shutil.copy2(source, dest)
-                    elif os.path.isdir(source):
-                        shutil.copytree(source, dest)
+                    if source.startswith('/hdfs'):
+                        source = source.replace('/hdfs', '')
+                        check_call(['hadoop', 'fs', '-copyToLocal', source, dest])
+                    else:
+                        if os.path.isfile(source):
+                            shutil.copy2(source, dest)
+                        elif os.path.isdir(source):
+                            shutil.copytree(source, dest)
 
         print 'In current dir:'
         print os.listdir(os.getcwd())
@@ -110,17 +120,22 @@ def run_job(in_args=sys.argv[1:]):
         # ---------------------------------------------------------------------
         if args.copyFromLocal:
             print 'POST EXECUTION: Copy to HDFS:'
+            copy_list = []
             for (source, dest) in args.copyFromLocal:
-                print source, dest
+                # handle globbing
+                for match in glob.iglob(source):
+                    copy_list.append((match, dest))
+
+            for (source, dest) in copy_list:
                 if not os.path.exists(source):
                     print 'File {0} does not exist - cannot copy to {1}'.format(source, dest)
                 else:
+                    print source, "-->", dest
                     if dest.startswith('/hdfs'):
-                        source = os.path.realpath(source)
                         dest_folder = os.path.dirname(dest)
                         if not os.path.exists(dest_folder):
                             dest_folder = dest_folder.replace('/hdfs', '')
-                            check_call(['hdfs', 'dfs', '-mkdir', '-p',dest_folder])
+                            check_call(['hdfs', 'dfs', '-mkdir', '-p', dest_folder])
                         dest = dest.replace('/hdfs', '')
                         check_call(['hadoop', 'fs', '-copyFromLocal', '-f', source, dest])
                     else:
