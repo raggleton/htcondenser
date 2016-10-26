@@ -16,7 +16,12 @@
         "STATUS_ERROR": "RED"
     },
 
-    "formatting": {
+    "detailed_statuses" : {
+        "idle": "BLUE",
+        "not_idle": "PURPLE"
+    },
+
+    "formatting" : {
         "FILENAME": "PURPLE + UNDERLINE",
         "NEXT_UPDATE": "YELLOW"
     }

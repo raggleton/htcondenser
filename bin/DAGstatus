@@ -47,6 +47,7 @@ class TColors:
     for k, v in COLORS.iteritems():
         COLORS[k] = str(v).decode('string_escape')
     STATUS_COLORS = fmt_dict['statuses']
+    STATUS_DETAIL_COLORS = fmt_dict['detailed_statuses']
     FMT_COLORS = fmt_dict['formatting']
 
     @classmethod
@@ -55,10 +56,16 @@ class TColors:
         print color_code + text + cls.COLORS['ENDC']
 
     @classmethod
-    def status_color(cls, status):
+    def status_color(cls, status, status_detail=None):
         """Return color code based on status string.
+        Preferntially uses status_detail if it exists.
         If no matching status string, returns end-color.
         """
+        if status_detail in cls.fmt_dict['detailed_statuses'].keys():
+            try:
+                return ''.join([cls.COLORS[part.strip()] for part in cls.STATUS_DETAIL_COLORS[status_detail].split("+")])
+            except KeyError:
+                log.exception('Cannot find colour with name %s', cls.fmt_dict['detailed_statuses'][status_detail])
         if status in cls.fmt_dict['statuses'].keys():
             try:
                 return ''.join([cls.COLORS[part.strip()] for part in cls.STATUS_COLORS[status].split("+")])
@@ -399,8 +406,9 @@ def print_table(status_filename, dag_status, node_statuses, status_end, only_sum
         print job_header
         print "-" * columns
         for n in node_statuses:
+            # this is bloody awful
             TColors.printc(job_format.format(*[str(n.__dict__[v["attr"]])[0:v['len']] for v in job_dict.itervalues()]),
-                           TColors.status_color(n.node_status))
+                           TColors.status_color(n.node_status, n.status_details))
         print "-" * columns
     # print summary of all jobs
     print "~" * columns
