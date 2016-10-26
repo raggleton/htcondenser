@@ -55,8 +55,8 @@ class DAGMan(object):
                  dot=None,
                  other_args=None):
         super(DAGMan, self).__init__()
-        self.dag_filename = filename
-        if os.path.abspath(self.dag_filename).startswith('/users'):
+        self.dag_filename = os.path.abspath(filename)
+        if self.dag_filename.startswith('/users'):
             raise IOError('You cannot put DAG filename on /users - must be on NFS (e.g.. /storage')
         self.status_file = status_file
         self.status_update_period = str(status_update_period)
@@ -347,7 +347,7 @@ class DAGMan(object):
         """Write DAG to file and causes all Jobs to write their HTCondor submit files."""
         dag_contents = self.generate_dag_contents()
         log.info('Writing DAG to %s', self.dag_filename)
-        check_dir_create(os.path.dirname(os.path.realpath(self.dag_filename)))
+        check_dir_create(os.path.dirname(self.dag_filename))
         with open(self.dag_filename, 'w') as dfile:
             dfile.write(dag_contents)
 
@@ -382,5 +382,4 @@ class DAGMan(object):
         mod_env = deepcopy(os.environ)
         mod_env['_CONDOR_DAGMAN_MAX_SUBMITS_PER_INTERVAL'] = str(submit_per_interval)
         check_call(cmds, env=mod_env)
-        log.info('Check DAG status:')
-        log.info('DAGStatus %s', self.status_file)
+        log.info('Check DAG status:\nDAGstatus %s', self.status_file)
