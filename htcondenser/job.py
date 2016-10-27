@@ -217,8 +217,8 @@ class Job(object):
                         new_args[i] = ifile.hdfs
                 # Add input files to be transferred across,
                 # but only if they originally aren't on hdfs
-                if not ifile.original.startswith('/hdfs'):
-                    job_args.extend(['--copyToLocal', ifile.hdfs, ifile.worker])
+                # if not ifile.original.startswith('/hdfs'):
+                    # job_args.extend(['--copyToLocal', ifile.hdfs, ifile.worker])
 
         log.debug("New job args:")
         log.debug(new_args)
