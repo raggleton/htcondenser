@@ -63,6 +63,14 @@ class DAGMan(object):
         self.dot = dot
         self.other_args = other_args
 
+        # Check output filenames are not blank
+        # ---------------------------------------------------------------------
+        for f in [self.dag_filename, self.status_file, self.dot]:
+            bad_filenames = ['', '.']
+            if f in bad_filenames:
+                raise OSError('Bad output filename')
+
+
         # hold info about Jobs. key is name, value is a dict
         self.jobs = OrderedDict()
 

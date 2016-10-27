@@ -161,7 +161,7 @@ class JobSet(object):
 
         # Check output filenames are not blank
         # ---------------------------------------------------------------------
-        for f in [self.out_file, self.err_file, self.log_file]:
+        for f in [self.filename, self.out_file, self.err_file, self.log_file]:
             bad_filenames = ['', '.']
             if f in bad_filenames:
                 raise OSError('Bad output filename')
