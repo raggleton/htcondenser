@@ -282,7 +282,7 @@ class JobSet(object):
             if not self.other_job_args:
                 self.other_job_args = dict()
             self.other_job_args['accounting_group'] = 'group_physics.hep'
-            self.other_job_args['account_group_user'] = '$ENV(LOGNAME)'
+            self.other_job_args['accounting_group_user'] = '$ENV(LOGNAME)'
 
         # Update other_job_args if certificate
         if self.certificate:
