@@ -39,6 +39,7 @@ To do this use the "global" install:
 
 - Manual (global) install (for use with CMSSW, etc): clone this repository, then run ``./setup.sh``. This will be required every time you login, so you may want to add it to your ``.bashrc``.
 
+**N.B** `master` branch should **always** be usable. I have added some tags; these are more "milestones" to show a collection of changes (e.g. new functionality, serioud bugfix).
 
 How do I get started?
 ---------------------
