@@ -125,7 +125,7 @@ class JobSet(object):
         self.exe = exe
         self.copy_exe = copy_exe
         self.setup_script = setup_script
-        self.filename = filename
+        self.filename = os.path.abspath(filename)
         self.out_dir = os.path.realpath(str(out_dir))
         self.out_file = str(out_file)
         self.err_dir = os.path.realpath(str(err_dir))
