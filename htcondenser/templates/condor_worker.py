@@ -152,4 +152,4 @@ def run_job(in_args=sys.argv[1:]):
 
 
 if __name__ == "__main__":
-    run_job()
+    sys.exit(run_job())
