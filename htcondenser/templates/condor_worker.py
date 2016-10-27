@@ -105,7 +105,7 @@ def run_job(in_args=sys.argv[1:]):
         # If it's a local file, we need to do ./ for some reason...
         # But we must determine this AFTER running setup script,
         # can't do it beforehand
-        run_cmd = "if [[ -e {exe} ]];then ./{exe} {args};else {exe} {args};fi"
+        run_cmd = "if [[ -e {exe} ]];then /usr/bin/time -v ./{exe} {args};else /usr/bin/time -v {exe} {args};fi"
         run_args = ' '.join(args.args) if args.args else ''
         run_cmd = run_cmd.format(exe=args.exe, args=run_args)
         print 'Contents of dir before running:'
