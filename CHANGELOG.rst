@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v0.3.0 (27th October 2016)
+--------------------------
+
+- Globbing (aka wildcards) now supported in input_output file args. This allows for e.g. `CMSSW_*/src/Hist.root`
+
+- `DAGstatus`  now has options for colouring based on the detailed status column. This means one can now differentiate between idle and running jobs
+
+
 v0.2.0 (14th June 2016)
 -----------------------
 
