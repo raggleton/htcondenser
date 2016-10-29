@@ -15,4 +15,8 @@ setup(
     scripts=glob('bin/*'),
     package_data={'htcondenser': ['templates/*']},
     include_package_data=True,
+    install_requires=[
+        'plotly',
+        'psutil'
+    ]
 )
