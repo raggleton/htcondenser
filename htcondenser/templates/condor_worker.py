@@ -12,6 +12,15 @@ import sys
 import shutil
 import os
 import glob
+import json
+import time
+
+do_status = True
+try:
+    import psutil
+except ImportError:
+    print 'Cannot do snapshot monitoring'
+    do_status = False
 
 
 class WorkerArgParser(argparse.ArgumentParser):
@@ -52,6 +61,7 @@ def run_job(in_args=sys.argv[1:]):
     args = parser.parse_args(in_args)
     print 'Args:'
     print args
+
 
     # Make sandbox area to avoid names clashing, and stop auto transfer
     # back to submission node
@@ -110,8 +120,42 @@ def run_job(in_args=sys.argv[1:]):
         run_cmd = run_cmd.format(exe=args.exe, args=run_args)
         print 'Contents of dir before running:'
         print os.listdir(os.getcwd())
-        print "Running:", setup_cmd + run_cmd
-        check_call(setup_cmd + run_cmd, shell=True)
+        total_cmd = setup_cmd + run_cmd
+        print "Running:", total_cmd
+
+        # check_call(total_cmd, shell=True)
+
+        process = Popen(total_cmd, shell=True)
+
+        if do_status:
+            status_dict = {'process': None, 'logs': [], 'end': None}
+            start_fields = ['pid', 'name', 'create_time']
+            running_fields = ['name', 'exe', 'status',
+                              'cpu_percent', 'cpu_times',
+                              'memory_full_info', 'memory_percent', 'io_counters']
+            the_proc = psutil.Process(process.pid)
+            # Add process starting info
+            if the_proc:
+                status_dict['process'] = the_proc.as_dict(start_fields)
+            while process.poll() is None:
+                # need to loop through all children to find the interesting ones
+                # as multiple layers, and parents don't accumulate child stats
+                # add a filter for running only?
+                children_dicts = [child.as_dict(running_fields)
+                                  for child in the_proc.children(recursive=True)]
+                status_dict['logs'].append({'time': time.time(), 'processes': children_dicts})
+                time.sleep(15)
+            status_dict['end'] = {'time': time.time(), 'return': process.returncode}
+
+            with open("status.json", "w") as status_file:
+                json.dump(status_dict, status_file)
+
+            args.copyFromLocal = args.copyFromLocal or []
+            args.copyFromLocal.append(['status.json', '/hdfs/user/ra12451/status_%s.json' % (time.strftime("%d_%b_%y_%H%M%S"))])
+
+        # HOW TO RETURN process.returncode ???
+        if int(process.returncode) != 0:
+            raise RuntimeError('Process %s exited with error code %d' % (total_cmd, int(process.returncode)))
 
         print 'In current dir:'
         print os.listdir(os.getcwd())
@@ -143,12 +187,24 @@ def run_job(in_args=sys.argv[1:]):
                             shutil.copy2(source, dest)
                         elif os.path.isdir(source):
                             shutil.copytree(source, dest)
+
     finally:
         # Cleanup
         # ---------------------------------------------------------------------
         print 'CLEANUP'
         os.chdir('..')
         shutil.rmtree(tmp_dir)
+
+    return 0
+
+
+def find_proc(process_name):
+    the_proc = None
+    for p in psutil.process_iter():
+        if any([process_name in x for x in p.cmdline()]):
+            print 'Found process:', p.name(), p.exe(), p.cmdline()
+            the_proc = p
+    return the_proc
 
 
 if __name__ == "__main__":
