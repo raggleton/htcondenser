@@ -7,7 +7,7 @@ import logging
 import os
 import re
 from subprocess import check_call
-from htcondenser.common import cp_hdfs, check_certificate, check_dir_create
+from htcondenser.common import cp_hdfs, check_certificate, check_dir_create, check_good_filename
 from collections import OrderedDict
 import htcondenser as ht
 
@@ -125,6 +125,9 @@ class JobSet(object):
         self.exe = exe
         self.copy_exe = copy_exe
         self.setup_script = setup_script
+        # Check output filenames are not rubbish
+        for f in [filename, out_file, err_file, log_file]:
+            check_good_filename(f)
         self.filename = os.path.abspath(filename)
         self.out_dir = os.path.realpath(str(out_dir))
         self.out_file = str(out_file)
@@ -152,22 +155,12 @@ class JobSet(object):
         # Hold all Job object this JobSet manages, key is Job name.
         self.jobs = OrderedDict()
 
-
         # Setup directories
         # ---------------------------------------------------------------------
         for d in [self.out_dir, self.err_dir, self.log_dir, self.hdfs_store]:
             if d:
                 check_dir_create(d)
 
-        # Check output filenames are not blank
-        # ---------------------------------------------------------------------
-        for f in [self.filename, self.out_file, self.err_file, self.log_file]:
-            bad_filenames = ['', '.']
-            if f in bad_filenames:
-                raise OSError('Bad output filename')
-
-        # Setup mirrors for any common input files
-        # ---------------------------------------------------------------------
         self.setup_common_input_file_mirrors(self.hdfs_store)
 
     def __eq__(self, other):
@@ -196,6 +189,7 @@ class JobSet(object):
         hdfs_mirror_dir : str
             Location of directory to store mirrored copies.
         """
+        mirrors = []
         for ifile in self.common_input_files:
             ifile = os.path.abspath(ifile)
             basename = os.path.basename(ifile)
@@ -203,7 +197,8 @@ class JobSet(object):
             hdfs_mirror = (ifile if ifile.startswith('/hdfs')
                            else os.path.join(mirror_dir, basename))
             mirror = ht.FileMirror(original=ifile, hdfs=hdfs_mirror, worker=basename)
-            self.common_input_file_mirrors.append(mirror)
+            mirrors.append(mirror)
+        self.common_input_file_mirrors = mirrors
 
     def add_job(self, job):
         """Add a Job to the collection of jobs managed by this JobSet.
@@ -232,6 +227,8 @@ class JobSet(object):
 
     def write(self, dag_mode):
         """Write jobs to HTCondor job file."""
+
+        self.setup_common_input_file_mirrors(self.hdfs_store)
 
         with open(self.job_template) as tfile:
             template = tfile.read()

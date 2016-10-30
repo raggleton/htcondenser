@@ -9,7 +9,7 @@ from copy import deepcopy
 from subprocess import check_call
 from collections import OrderedDict
 import htcondenser as ht
-from htcondenser.common import date_time_now, check_dir_create
+from htcondenser.common import date_time_now, check_dir_create, check_good_filename
 
 
 log = logging.getLogger(__name__)
@@ -62,15 +62,8 @@ class DAGMan(object):
         self.status_update_period = str(status_update_period)
         self.dot = dot
         self.other_args = other_args
-
-        # Check output filenames are not blank
-        # ---------------------------------------------------------------------
-        for f in [self.dag_filename, self.status_file, self.dot]:
-            bad_filenames = ['', '.']
-            if f in bad_filenames:
-                raise OSError('Bad output filename')
-
-
+        for f in [filename, status_file, dot]:
+            check_good_filename(f)
         # hold info about Jobs. key is name, value is a dict
         self.jobs = OrderedDict()
 
@@ -124,12 +117,10 @@ class DAGMan(object):
         if job.name in self.jobs:
             raise KeyError('Job with name %s already exists in DAG - names must be unique' % job.name)
 
-        # Append necessary job arguments to any user opts.
+        # Store any user opts.
         job_vars = job_vars or ""
-        job_vars += 'jobOpts="%s"' % job.generate_job_arg_str()
 
-        self.jobs[job.name] = dict(job=job, job_vars=job_vars, retry=retry, requires=None)
-
+        # Keep list of names of Jobs that must be executed before this one.
         hierarchy_list = []
         # requires can be:
         # - a job name [str]
@@ -152,8 +143,7 @@ class DAGMan(object):
             else:
                 raise TypeError('Can only add Job(s) or job name(s)')
 
-        # Keep list of names of Jobs that must be executed before this one.
-        self.jobs[job.name]['requires'] = hierarchy_list
+        self.jobs[job.name] = dict(job=job, job_vars=job_vars, retry=retry, requires=hierarchy_list)
 
     def check_job_requirements(self, job):
         """Check that the required Jobs actually exist and have been added to DAG.
@@ -250,9 +240,9 @@ class DAGMan(object):
         job_obj = self.jobs[job_name]['job']
         job_contents = ['JOB %s %s' % (job_name, job_obj.manager.filename)]
 
-        job_vars = self.jobs[job_name]['job_vars']
-        if job_vars:
-            job_contents.append('VARS %s %s' % (job_name, job_vars))
+        # Get their latest and greatest args
+        self.jobs[job_name]['job_vars'] += 'jobOpts="%s"' % job_obj.generate_job_arg_str()
+        job_contents.append('VARS %s %s' % (job_name, self.jobs[job_name]['job_vars']))
 
         job_retry = self.jobs[job_name]['retry']
         if job_retry:
@@ -311,12 +301,12 @@ class DAGMan(object):
         contents = ['# DAG created at %s' % date_time_now(), '']
 
         # Add jobs
-        for name in self.jobs:
-            contents.append(self.generate_job_str(name))
+        for job in self.jobs:
+            contents.append(self.generate_job_str(job))
 
         # Add parent-child relationships
-        for name in self.jobs:
-            req_str = self.generate_job_requirements_str(name)
+        for job in self.jobs:
+            req_str = self.generate_job_requirements_str(job)
             if req_str != '':
                 contents.append(req_str)
 
@@ -331,7 +321,7 @@ class DAGMan(object):
             fmt = 'pdf'
             output_file = os.path.splitext(self.dot)[0] + '.' + fmt
             contents.append('# dot -T%s %s -o %s' % (fmt, self.dot, output_file))
-            contents.append('DOT %s' % self.dot)
+            contents.append('DOT %s UPDATE' % self.dot)
 
         if self.other_args:
             contents.append('')

@@ -30,6 +30,14 @@ These go along with the `code of conduct <https://wikis.bris.ac.uk/display/dic/C
 
 * `hadoop commands <https://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/FileSystemShell.html>`_ should be used with ``/hdfs`` - use of ``cp``, ``rm``, etc can lead to lockup with many or large files.
 
+Therefore, some basic rules for ``htcondenser`` are:
+
+* Workers shall read input files from HDFS
+
+* Workers shall deposit their output files on HDFS
+
+* Condor job files, DAG files, and log files will not be allowed on ``/users`` or ``/hdfs``
+
 Basic non-DAG jobs
 --------------------
 

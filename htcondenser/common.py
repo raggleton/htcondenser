@@ -166,3 +166,16 @@ def check_certificate():
                                'please renew using `voms-proxy-init -voms cms --valid 168`')
     else:
         raise RuntimeError(err)
+
+
+def check_good_filename(filename):
+    """Checks the filename isn't rubbish e.g. blank, a period
+
+    Raises
+    ------
+    OSError
+        If bad filename
+    """
+    bad_filenames = ['', '.']
+    if filename in bad_filenames:
+        raise OSError('Bad filename %s' % f)
