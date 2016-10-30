@@ -9,7 +9,7 @@ from copy import deepcopy
 from subprocess import check_call
 from collections import OrderedDict
 import htcondenser as ht
-from htcondenser.common import date_time_now, check_dir_create
+from htcondenser.common import date_time_now, check_dir_create, check_good_filename
 
 
 log = logging.getLogger(__name__)
@@ -62,15 +62,8 @@ class DAGMan(object):
         self.status_update_period = str(status_update_period)
         self.dot = dot
         self.other_args = other_args
-
-        # Check output filenames are not blank
-        # ---------------------------------------------------------------------
-        for f in [self.dag_filename, self.status_file, self.dot]:
-            bad_filenames = ['', '.']
-            if f in bad_filenames:
-                raise OSError('Bad output filename')
-
-
+        for f in [filename, status_file, dot]:
+            check_good_filename(f)
         # hold info about Jobs. key is name, value is a dict
         self.jobs = OrderedDict()
 

@@ -7,7 +7,7 @@ import logging
 import os
 import re
 from subprocess import check_call
-from htcondenser.common import cp_hdfs, check_certificate, check_dir_create
+from htcondenser.common import cp_hdfs, check_certificate, check_dir_create, check_good_filename
 from collections import OrderedDict
 import htcondenser as ht
 
@@ -125,6 +125,9 @@ class JobSet(object):
         self.exe = exe
         self.copy_exe = copy_exe
         self.setup_script = setup_script
+        # Check output filenames are not rubbish
+        for f in [filename, out_file, err_file, log_file]:
+            check_good_filename(f)
         self.filename = os.path.abspath(filename)
         self.out_dir = os.path.realpath(str(out_dir))
         self.out_file = str(out_file)
@@ -152,19 +155,11 @@ class JobSet(object):
         # Hold all Job object this JobSet manages, key is Job name.
         self.jobs = OrderedDict()
 
-
         # Setup directories
         # ---------------------------------------------------------------------
         for d in [self.out_dir, self.err_dir, self.log_dir, self.hdfs_store]:
             if d:
                 check_dir_create(d)
-
-        # Check output filenames are not blank
-        # ---------------------------------------------------------------------
-        for f in [self.filename, self.out_file, self.err_file, self.log_file]:
-            bad_filenames = ['', '.']
-            if f in bad_filenames:
-                raise OSError('Bad output filename')
 
         # Setup mirrors for any common input files
         # ---------------------------------------------------------------------
