@@ -91,10 +91,10 @@ class Job(object):
         self.hdfs_mirror_dir = hdfs_mirror_dir
         self.log_file = log_file  # no abspath as we use as flag to do logging or not
         self.log_interval = float(log_interval)
-        if self.log_interval < log_interval_min:
+        if self.log_interval < self.log_interval_min:
             log.warning("Job must have a minimum logging interval of %d, "
-                        "setting to that", log_interval_min)
-            self.log_interval = log_interval_min
+                        "setting to that", self.log_interval_min)
+            self.log_interval = self.log_interval_min
         if self.log_file:
             if not self.log_file.startswith('/hdfs'):
                 raise RuntimeError("Log file must be on HDFS")
