@@ -106,6 +106,8 @@ class Job(object):
         if not self.hdfs_mirror_dir:
             self.hdfs_mirror_dir = os.path.join(self.manager.hdfs_store, self.name)
             log.debug('Auto setting mirror dir %s', self.hdfs_mirror_dir)
+        # Do an initial setup of mirror dirs here - we'll do another one later
+        # TODO: do this any time input/output files gets changed!!!
         self.setup_input_file_mirrors(self.hdfs_mirror_dir)
         self.setup_output_file_mirrors(self.hdfs_mirror_dir)
 
@@ -123,6 +125,7 @@ class Job(object):
         hdfs_mirror_dir : str
             Location of directory to store mirrored copies.
         """
+        mirrors = []
         for ifile in self.input_files:
             basename = os.path.basename(ifile)
             mirror_dir = hdfs_mirror_dir
@@ -132,7 +135,8 @@ class Job(object):
             hdfs_mirror = (ifile if ifile.startswith('/hdfs')
                            else os.path.join(mirror_dir, basename))
             mirror = ht.FileMirror(original=ifile, hdfs=hdfs_mirror, worker=basename)
-            self.input_file_mirrors.append(mirror)
+            mirrors.append(mirror)
+        self.input_file_mirrors = mirrors
 
     def setup_output_file_mirrors(self, hdfs_mirror_dir):
         """Attach a mirror HDFS location for each output file.
@@ -142,6 +146,7 @@ class Job(object):
         hdfs_mirror_dir : str
             Location of directory to store mirrored copies.
         """
+        mirrors = []
         for ofile in self.output_files:
             basename = os.path.basename(ofile)
             # is this sensible? shoudl we not have
@@ -155,7 +160,8 @@ class Job(object):
             else:
                 worker = ofile
             mirror = ht.FileMirror(original=ofile, hdfs=hdfs_mirror, worker=worker)
-            self.output_file_mirrors.append(mirror)
+            mirrors.append(mirror)
+        self.output_file_mirrors = mirrors
 
     def transfer_to_hdfs(self):
         """Transfer files across to HDFS.
@@ -200,6 +206,10 @@ class Job(object):
             job_args.extend(['--setup', os.path.basename(self.manager.setup_script)])
 
         new_args = self.args[:]
+
+        # Update input files to be transferred across
+        self.setup_input_file_mirrors(self.hdfs_mirror_dir)
+
         if self.manager.transfer_hdfs_input:
             # Replace input files in exe args with their worker node copies
             for ifile in chain(self.input_file_mirrors, self.manager.common_input_file_mirrors):
@@ -223,7 +233,9 @@ class Job(object):
         log.debug("New job args:")
         log.debug(new_args)
 
-        # Add output files to be transferred across
+        # Update output files to be transferred across
+        self.setup_output_file_mirrors(self.hdfs_mirror_dir)
+
         # Replace output files in exe args with their worker node copies
         for ofile in self.output_file_mirrors:
             for i, arg in enumerate(new_args):
