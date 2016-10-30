@@ -46,6 +46,13 @@ class Job(object):
         use `hdfs_mirror_dir`/self.name, where `hdfs_mirror_dir` is taken
         from the manager. If the directory does not exist, it is created.
 
+    log_file : str, optional
+        Output JSON file for advanced logging of running. Must be on /hdfs,
+        otherwise will not be transferred. If None, will not do logging.
+
+    log_interval : float, optional
+        Interval for logging, in minutes.
+
     Raises
     ------
     KeyError
@@ -57,9 +64,12 @@ class Job(object):
         (or a derived class).
     """
 
+    log_interval_min = 0.2
+
     def __init__(self, name, args=None,
                  input_files=None, output_files=None,
-                 quantity=1, hdfs_mirror_dir=None):
+                 quantity=1, hdfs_mirror_dir=None,
+                 log_file=None, log_interval=1.):
         super(Job, self).__init__()
         self._manager = None
         self.name = str(name)
@@ -79,6 +89,17 @@ class Job(object):
         self.input_file_mirrors = []  # input original, mirror on HDFS, and worker
         self.output_file_mirrors = []  # output mirror on HDFS, and worker
         self.hdfs_mirror_dir = hdfs_mirror_dir
+        self.log_file = log_file  # no abspath as we use as flag to do logging or not
+        self.log_interval = float(log_interval)
+        if self.log_interval < log_interval_min:
+            log.warning("Job must have a minimum logging interval of %d, "
+                        "setting to that", log_interval_min)
+            self.log_interval = log_interval_min
+        if self.log_file:
+            if not self.log_file.startswith('/hdfs'):
+                raise RuntimeError("Log file must be on HDFS")
+            # This assumes we are only trasnferring after exe finished
+            self.output_files.append(self.log_file)
 
     def __eq__(self, other):
         return self.name == other.name
@@ -233,6 +254,10 @@ class Job(object):
 
         # Add the exe
         job_args.extend(['--exe', os.path.basename(self.manager.exe)])
+
+        # Add the logging settings
+        if self.log_file:
+            job_args.extend(['--log', self.log_file, '--logInterval', self.log_interval])
 
         # Add arguments for exe MUST COME LAST AS GREEDY
         if new_args:
