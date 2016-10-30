@@ -324,7 +324,7 @@ class DAGMan(object):
             fmt = 'pdf'
             output_file = os.path.splitext(self.dot)[0] + '.' + fmt
             contents.append('# dot -T%s %s -o %s' % (fmt, self.dot, output_file))
-            contents.append('DOT %s' % self.dot)
+            contents.append('DOT %s UPDATE' % self.dot)
 
         if self.other_args:
             contents.append('')
