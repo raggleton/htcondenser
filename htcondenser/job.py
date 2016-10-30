@@ -254,6 +254,10 @@ class Job(object):
         log.debug("New job args:")
         log.debug(new_args)
 
+        # this prob shouldn't be here... but i dont know where
+        if self.log_file:
+            self.output_files.append(self.log_file)
+
         # Update output files to be transferred across
         self.setup_output_file_mirrors(self.hdfs_mirror_dir)
 
