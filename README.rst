@@ -22,24 +22,49 @@ An area on ``/hdfs/users`` that you have read/write permission. Python
 `sphinx <http://www.sphinx-doc.org/en/stable/index.html>`_
 (``pip install sphinx``). ``flake8`` and ``pep8`` are also useful tools, and are available via ``pip`` or ``conda``.
 
-How do I get/install it?
+How do I install it?
 ------------------------
 
-It depends.
+There are 2 different ways of installing. Both ensure that the package is found globally.
 
-- You can install using ``pip`` for a given python install instance: ::
+1 via ``pip``
+^^^^^^^^^^^^^
 
-  pip install --user git+https://github.com/raggleton/htcondenser.git@setup
+This is the easiest and recommended method, but requires you to have ``pip`` installed. The easiest way is via ``conda``: either having your own miniconda installation, or simply adding the common one to ``PATH``::
 
-**NOTE** this **will not work properly** with CMSSW, etc since they use a different ``python`` and hence look for packages in different places. **TODO: fix this**.
+    export PATH=/software/miniconda/bin:$PATH
 
-In a similar vein, ``conda`` users will need to install this for each conda environment.
+Note that ``pip`` is **not** required for using the library, just installing it.
 
-To do this use the "global" install:
+You can then install the library by doing::
 
-- Manual (global) install (for use with CMSSW, etc): clone this repository, then run ``./setup.sh``. This will be required every time you login, so you may want to add it to your ``.bashrc``.
+    pip install -U --user git+https://github.com/raggleton/htcondenser.git@setup
 
-**N.B** `master` branch should **always** be usable. I have added some tags; these are more "milestones" to show a collection of changes (e.g. new functionality, serioud bugfix).
+Unfortunately, the executable scripts are not added to ``PATH`` by default. To do this, add the following to your ``~/.bashrc``::
+
+    export PATH=$HOME/.local/bin:$PATH
+
+Then do ``source ~/.bashrc`` for this to take effect.
+
+2 by hand
+^^^^^^^^^
+
+1. Clone this repo
+
+2. Run ``./setup.sh``. Since is required every time you log in, you can add it to your ``~/.bashrc``::
+
+    source <path to htcondenser>/setup.sh
+  
+**N.B** ``master`` branch should **always** be usable. I have added some tags; these are more "milestones" to show a collection of changes (e.g. new functionality, serioud bugfix).
+
+How do I update it?
+-------------------
+
+If you installed it via ``pip``, ismply run the same command as before::
+
+    pip install -U --user git+https://github.com/raggleton/htcondenser.git@setup
+
+If you cloned it locally first, ``cd`` into the cloned directory and simply ``git pull origin master``.
 
 How do I get started?
 ---------------------

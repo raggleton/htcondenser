@@ -8,11 +8,13 @@ Some help/guidelines if you want to contribute to this library.
 
 2) Fork this repo to your own repo
 
-3) Clone it, hack away, commit (preferably to a new topic branch)
+3) Clone & install it, either by using `setup.sh`, or ``pip install -e <path to clone>``
 
-4) Push back to your repo
+4) Hack away, commit (preferably to a new topic branch)
 
-5) Make a Pull Request
+5) Push back to your repo
+
+6) Make a Pull Request
 
 ## Style
 
