@@ -30,7 +30,7 @@ There are 2 different ways of installing. Both ensure that the package is found 
 1 via ``pip``
 ^^^^^^^^^^^^^
 
-This is the easiest and recommended method, but requires you to have ``pip`` installed. The easiest way is via ``conda``: either having your own miniconda installation, or simply adding the common one to ``PATH``::
+This is the easiest and recommended method, but requires you to have ``pip`` installed. The easiest way is via ``conda``: either having your own miniconda installation, or simply adding the common one (``/software/miniconda/bin/pip``) to ``PATH``::
 
     export PATH=/software/miniconda/bin:$PATH
 
@@ -38,7 +38,7 @@ Note that ``pip`` is **not** required for using the library, just installing it.
 
 You can then install the library by doing::
 
-    pip install -U --user git+https://github.com/raggleton/htcondenser.git@setup
+    pip install -U --user git+https://github.com/raggleton/htcondenser.git
 
 Unfortunately, the executable scripts are not added to ``PATH`` by default. To do this, add the following to your ``~/.bashrc``::
 
@@ -62,7 +62,7 @@ How do I update it?
 
 If you installed it via ``pip``, ismply run the same command as before::
 
-    pip install -U --user git+https://github.com/raggleton/htcondenser.git@setup
+    pip install -U --user git+https://github.com/raggleton/htcondenser.git
 
 If you cloned it locally first, ``cd`` into the cloned directory and simply ``git pull origin master``.
 
